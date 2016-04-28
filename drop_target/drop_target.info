@@ -1,0 +1,6 @@
+name = Drop target
+description = A droppable widget for file-, image- and entity references fields.
+core = 7.x
+package = Media
+
+dependencies[] = cke_placeholder

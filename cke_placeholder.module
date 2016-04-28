@@ -1,0 +1,636 @@
+<?php
+/**
+ * @file
+ * CKEditor placeholder filter.
+ */
+
+/**
+ * Implements hook_menu().
+ *
+ * Callbacks for in-editor widget preview and rendering of source pane.
+ */
+function cke_placeholder_menu() {
+  $items = array();
+
+  $items['cke-placeholder/widget-preview/%'] = array(
+    'title' => 'Ajax CKEditor preview',
+    'page callback' => 'cke_placeholder_widget_preview',
+    'page arguments' => array(2),
+    'access arguments' => array('access content'),
+    'delivery callback' => 'cke_placeholder_simple_deliver',
+    'type' => MENU_CALLBACK,
+    'file' => 'cke_placeholder.admin.inc',
+  );
+
+  $items['cke-placeholder/source-pane'] = array(
+    'title' => 'Ajax CKEditor preview',
+    'page callback' => 'cke_placeholder_source_list',
+    'page arguments' => array(2),
+    'access arguments' => array('access content'),
+    'delivery callback' => 'cke_placeholder_simple_deliver',
+    'type' => MENU_CALLBACK,
+    'file' => 'cke_placeholder.admin.inc',
+  );
+
+  $items['cke-placeholder/media-status-update/%file/%'] = array(
+    'title' => 'Media status update',
+    'page callback' => 'cke_placeholder_media_status_update',
+    'page arguments' => array(2, 3),
+    'access arguments' => array('view private files'),
+    'delivery_callback' => 'cke_placeholder_simple_deliver',
+    'type' => MENU_CALLBACK,
+    'file' => 'cke_placeholder.editor_callbacks.inc',
+  );
+
+  $items['cke-placeholder/update-done/%file'] = array(
+    'title' => 'Update parent window from dialog iframe',
+    'page callback' => 'cke_placeholder_update_done',
+    'page arguments' => array(2),
+    'access arguments' => array('view private files'),
+    'delivery callback' => 'cke_placeholder_simple_deliver',
+    'type' => MENU_CALLBACK,
+    'file' => 'cke_placeholder.editor_callbacks.inc',
+  );
+
+  $items['admin/config/content/cke-placeholder-settings'] = array(
+    'title' => 'Administer media file settings',
+    'description' => 'Configure allowed file extensions',
+    'access arguments' => array('administer site configuration'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('cke_placeholder_media_file_settings_form'),
+    'type' => MENU_NORMAL_ITEM,
+    'file' => 'cke_placeholder.admin.inc',
+  );
+
+  return $items;
+}
+
+/**
+ * Super simple delivery callback.
+ */
+function cke_placeholder_simple_deliver($content) {
+  print $content;
+}
+
+/**
+ * Implements hook_ckeditor_plugin().
+ *
+ * Add plugins in the array and the corresponding plugin
+ * folder in the module´s /js folder.
+ */
+function cke_placeholder_ckeditor_plugin() {
+  $path = drupal_get_path('module', 'cke_placeholder');
+
+  return array(
+    'cke_placeholder' => array(
+      'name' => 'cke_placeholder',
+      'desc' => t('CKE Placeholder - Apply JS and PHP filters for using placeholders in custom plugins.'),
+      'path' => $path . '/cke_placeholder/',
+    ),
+    'cke_link_text' => array(
+      'name' => 'cke_link_text',
+      'desc' => t('Extend CKEditor built-in link plugin by making link\'s text editable.'),
+      'path' => $path . '/cke_link_text/',
+    ),
+  );
+}
+
+/**
+ * Implements hook_filter_info().
+ */
+function cke_placeholder_filter_info() {
+  $filters = array();
+
+  $filters['cke_placeholder'] = array(
+    'title' => t('Apply CKEditor Placholder filters.'),
+    'process callback' => 'cke_placeholder_filter_process',
+    'cache' => FALSE,
+  );
+
+  return $filters;
+}
+
+/**
+ * Process function for filter.
+ */
+function cke_placeholder_filter_process($text, $filter = NULL) {
+  cke_placeholder_filter_process_callback(NULL, $filter);
+
+  $filter_regex = "/(<!--\s*)?\[(?<tag>[^]:]+):(?<args>(?:[^]\\\]|\\\.)*)\](\s*-->)?/";
+  $output = preg_replace_callback($filter_regex, 'cke_placeholder_filter_process_callback', $text);
+
+  return $output;
+}
+
+/**
+ * Preg_replace callback for the filter.
+ *
+ * @param array $match
+ *   Regex matches.
+ */
+function cke_placeholder_filter_process_callback($match, $set_filter = NULL) {
+  static $currently_processing = array();
+  static $filter = NULL;
+
+  if (!empty($set_filter)) {
+    $filter = $set_filter;
+    return;
+  }
+
+  if ($tag = cke_placeholder_tags($match['tag'])) {
+    if (isset($tag['css']) && count($tag['css'])) {
+      foreach ($tag['css'] as $css) {
+        drupal_add_css($css);
+      }
+    }
+
+    if (isset($tag['js']) && count($tag['js'])) {
+      foreach ($tag['js'] as $js) {
+        drupal_add_js($js);
+      }
+    }
+
+    if (function_exists($tag['process'])) {
+      $function = $tag['process'];
+
+      $args = drupal_json_decode(str_replace("\\]", "]", $match['args']));
+      $lock_key = substr($function . ':' . md5($match['args']), 0, 100);
+      // Make sure that we don't process elements recursively.
+      if (isset($currently_processing[$lock_key])) {
+        return $match[0];
+      }
+      else {
+        $currently_processing[$lock_key] = TRUE;
+        $output = $function($args, $filter);
+        unset($currently_processing[$lock_key]);
+        return $output;
+      }
+    }
+  }
+
+  return $match[0];
+}
+
+/**
+ * Returns available tags for filter.
+ */
+function cke_placeholder_tags($name = NULL) {
+  $tags = &drupal_static(__FUNCTION__, array());
+
+  if (!$tags) {
+    $tags = module_invoke_all('cke_placeholder_tags');
+    drupal_alter('cke_placeholder_tags', $tags);
+  }
+  if (!empty($name)) {
+    return isset($tags[$name]) ? $tags[$name] : NULL;
+  }
+
+  return $tags;
+}
+
+/**
+ * Implements hook_theme().
+ */
+function cke_placeholder_theme() {
+  $themes = array();
+
+  $themes['cke_placeholder_source_pane'] = array(
+    'variables' => array(
+      'source_items' => array(),
+      'offset' => NULL,
+      'display_pager' => NULL,
+    ),
+    'template' => 'templates/cke_placeholder.source_pane',
+  );
+
+  $themes['cke_placeholder_library_item'] = array(
+    'variables' => array(
+      'cke_placeholder_tag' => NULL,
+      'wrapper_id' => NULL,
+      'items' => array(),
+      'no_wrapper' => NULL,
+    ),
+    'template' => 'templates/cke_placeholder.library_item',
+  );
+
+  $themes['cke_placeholder_update_done'] = array(
+    'variables' => array(
+      'fid' => NULL,
+      'title' => NULL,
+      'caption' => NULL,
+    ),
+    'template' => 'templates/cke_placeholder.update_done',
+  );
+
+  return $themes;
+}
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Reads the static variable from cke_placeholder_field_widget_form_alter and
+ * adds a media library if necessary.
+ */
+function cke_placeholder_form_alter(&$form, &$form_state, $form_id) {
+  $library_add = drupal_static('cke_placeholder_field_widget_form_alter');
+  $library_added = &drupal_static(__FUNCTION__);
+
+  if (!isset($library_add)) {
+    foreach ($form as $element) {
+      if (is_array($element) && isset($element['#cke_tabs'])) {
+        $library_add = _cke_placeholder_get_dynamic_library();
+        $cke_tabs_widget = TRUE;
+      }
+    }
+  }
+
+  if ((isset($library_add) && !isset($library_added) && ($form_id != 'cke_placeholder_library_form'))
+    || isset($cke_tabs_widget)) {
+    drupal_add_library('system', 'ui.dialog');
+    $form['#after_build'][] = '_cke_placeholder_add_media_library';
+    $library_added = TRUE;
+  }
+
+}
+
+/**
+ * Wrapper to add the media library in after_build.
+ */
+function _cke_placeholder_add_media_library(&$form, &$form_state) {
+  $library_add = drupal_static('cke_placeholder_field_widget_form_alter');
+
+  if (!isset($library_add)) {
+    $library_add = _cke_placeholder_get_dynamic_library();
+  }
+
+  _cke_placeholder_media_library($form, $form_state, $library_add);
+
+  return $form;
+}
+
+function _cke_placeholder_get_dynamic_library() {
+  return array(
+    'cke_placeholder_library' => array(
+      'image' => 'image',
+    ),
+    'cke_placeholder_document_library' => array(
+      'document' => 'document',
+    ),
+    'upload_file' => array(TRUE),
+  );
+}
+
+/**
+ * Implements hook_field_widget_form_alter().
+ */
+function cke_placeholder_field_widget_form_alter(&$element, &$form_state, $context) {
+  $library_add = &drupal_static(__FUNCTION__);
+
+  $cke_placeholder_widgets = array(
+    'text_textarea_with_summary' => array(
+      'cke_placeholder_library' => array(
+        // 'image' and 'document' below are file types as provided by
+        // file_entity. They are used directly in querying file_managed table.
+        'image' => 'image',
+      ),
+      'cke_placeholder_document_library' => array(
+        // This is file type as provided by file_entity.
+        'document' => 'document',
+      ),
+      'upload_file' => array(TRUE),
+    ),
+    'text_textarea' => array(
+      'cke_placeholder_library' => array(
+        'image' => 'image',
+      ),
+      'cke_placeholder_document_library' => array(
+        'document' => 'document',
+      ),
+      'upload_file' => array(TRUE),
+    ),
+  );
+
+  if ($context['instance']['widget']['type'] == 'droptarget') {
+    $cke_placeholder_widgets['droptarget'] = array(
+      'cke_placeholder_library' => $context['instance']['widget']['settings']['types'],
+      'upload_file' => $context['instance']['widget']['settings']['types'],
+    );
+  }
+
+  drupal_alter('cke_placeholder_field_widget', $cke_placeholder_widgets);
+
+  if (empty($context['instance']['widget']['type'])
+    || empty($cke_placeholder_widgets[$context['instance']['widget']['type']])) {
+    return;
+  }
+
+  if (!isset($library_add)) {
+    $library_add = array();
+    $element['#after_build'][] = '_cke_placeholder_form_js_include';
+  }
+
+  $library_add = array_merge($cke_placeholder_widgets[$context['instance']['widget']['type']], $library_add);
+}
+
+/**
+ * Add media library to the form.
+ *
+ * @param array $form
+ *   Standard Drupal form array.
+ * @param array $form_state
+ *   Form state array.
+ */
+function _cke_placeholder_media_library(array &$form, array $form_state, $library_add) {
+  if (empty($library_add)) {
+    $library_add = array();
+  }
+
+  // Invoke all the hook calls.
+  $library_panes = module_invoke_all('cke_placeholder_library');
+  drupal_alter('cke_placeholder_library', $library_panes);
+
+  // Get the tab panes content (and the respective forms).
+  $cke_tabs = _cke_placeholder_get_tab_panes($form_state, $library_add, $library_panes);
+  $form['#suffix'] = render($cke_tabs);
+}
+
+/**
+ * Callback for media library pane.
+ */
+function _cke_placeholder_get_tab_panes(&$form_state, $library_add, $library_panes) {
+
+  $panes['panes_wrapper'] = array(
+    '#type' => 'container',
+    '#attributes' => array('class' => 'cke-placeholder-library-form-wrap'),
+  );
+
+  $panes['panes_wrapper']['closing_button'] = array(
+    '#type' => 'html_tag',
+    '#tag' => 'div',
+    '#value' => t('Close'),
+    '#attributes' => array(
+      'class' => 'cke-placeholder-library-close'
+    ),
+  );
+
+  $panes['panes_wrapper']['cke_active_tab'] = array(
+    '#type' => 'hidden',
+    '#attributes' => array(
+      'class' => array('cke-active-tab-input'),
+    ),
+  );
+
+  // Iterate through registered panes.
+  foreach ($library_panes as $pane_name => $pane) {
+    if (!empty($pane['file'])) {
+      $filename_parts = explode('.', $pane['file']);
+      module_load_include(array_pop($filename_parts), $pane['module'], implode('.', $filename_parts));
+    }
+    $pane_id = $pane_name . '-wrap';
+
+    $panes['panes_wrapper']['tab_' . $pane_name] = array(
+      '#type' => 'html_tag',
+      '#tag' => 'div',
+      '#value' => t($pane['pane_title']),
+      '#attributes' => array(
+        'class' => 'cke-placeholder-tab ' . $pane_name . '-tab',
+        'data-target' => $pane_id,
+      ),
+    );
+
+    // Add form element.
+    $pane_content = '';
+    if (isset($pane['form'])
+      && function_exists($pane['form'])) {
+      $form_settings = isset($library_add[$pane_name]) ? $library_add[$pane_name] : array();
+      $form = drupal_get_form($pane['form'], $form_settings);
+
+      $pane_content .= render($form);
+    }
+
+    if (isset($pane['list_callback'])) {
+      $pane_list_id = $pane_name . '-list';
+      if (!empty($pane['list_wrapper_id'])) {
+        $pane_list_id = $pane['list_wrapper_id'];
+      }
+      $list_items = call_user_func($pane['list_callback'], $form_state, $form_settings);
+      $pane_content .= theme('cke_placeholder_library_item', array(
+        'cke_placeholder_tag' => $pane_name,
+        'items' => $list_items,
+        'wrapper_id' => $pane_list_id,
+      ));
+    }
+
+    $panes['panes_wrapper'][$pane_name] = array(
+      '#type' => 'html_tag',
+      '#tag' => 'div',
+      '#value' => $pane_content,
+      '#attributes' => array(
+        'class' => 'cke-placeholder-fieldset-wrapper',
+        'id' => $pane_id,
+      ),
+    );
+  }
+
+  return $panes;
+}
+
+/**
+ * Load required JS.
+ */
+function _cke_placeholder_form_js_include(&$element, &$form_state) {
+  $library_add = &drupal_static('cke_placeholder_field_widget_form_alter');
+
+  if (!isset($library_add)) {
+    $library_add = array();
+  }
+
+  if (empty($element['#field_name'])) {
+    return;
+  }
+
+  $instance = field_info_instance($element['#entity_type'], $element['#field_name'], $element['#bundle']);
+
+  $cke_placeholder_widgets = array(
+    'text_textarea_with_summary' => array(
+      'cke_placeholder_library' => array(
+        'image' => 'image',
+      ),
+      'upload_file' => array(TRUE),
+    ),
+    'text_textarea' => array(
+      'cke_placeholder_library' => array(
+        'image' => 'image',
+      ),
+      'upload_file' => array(TRUE),
+    ),
+  );
+
+  if ($instance['widget']['type'] == 'droptarget') {
+    $cke_placeholder_widgets['droptarget'] = array(
+      'cke_placeholder_library' => $instance['widget']['settings']['types'],
+      'upload_file' => $instance['widget']['settings']['types'],
+    );
+  }
+
+  if (empty($instance['widget']['type'])
+    || empty($cke_placeholder_widgets[$instance['widget']['type']])) {
+    return;
+  }
+
+  $library_add = array_merge($cke_placeholder_widgets[$instance['widget']['type']], $library_add);
+  $path = drupal_get_path('module', 'cke_placeholder') . '/js_drupal/cke_placeholder_form.js';
+  drupal_add_js($path, array('type' => 'file'));
+
+  drupal_add_js(array(
+    'cke_placeholder' => array(
+      'filter' => cke_placeholder_tags(),
+      'editors' => array(),
+    ),
+  ), array('type' => 'setting'));
+
+  $path = drupal_get_path('module', 'cke_placeholder');
+
+  $element['#attached'] = array(
+    'js' => array($path . '/assets/cke_placeholder_form_library.js', $path . '/assets/cke_placeholder_object.js'),
+    'css' => array($path . '/assets/cke_placeholder_form.css'),
+  );
+
+  return $element;
+}
+
+/**
+ * Implements hook_element_info_alter().
+ *
+ * Adding new process function on text_format element.
+ */
+function cke_placeholder_element_info_alter(&$type) {
+  if (isset($type['text_format'])) {
+    $type['text_format']['#process'][] = 'cke_placeholder_text_format_proccess';
+  }
+}
+
+/**
+ * Add libraries for cke_placeholder working.
+ *
+ * "Text format" element uses wysiwyg.
+ * We have to add cke_placeholder libraries on that elements.
+ * Otherwise we will receive js error.
+ *
+ */
+function cke_placeholder_text_format_proccess($element) {
+  $path = drupal_get_path('module', 'cke_placeholder') . '/js_drupal/cke_placeholder_form.js';
+  drupal_add_js($path, array('type' => 'file'));
+
+  drupal_add_js(array(
+    'cke_placeholder' => array(
+      'filter' => cke_placeholder_tags(),
+      'editors' => array(),
+    ),
+  ), array('type' => 'setting'));
+
+  $path = drupal_get_path('module', 'cke_placeholder');
+  $element['#attached']['js'][] = $path . '/assets/cke_placeholder_form_library.js';
+  $element['#attached']['js'][] = $path . '/assets/cke_placeholder_object.js';
+  $element['#attached']['css'][] = $path . '/assets/cke_placeholder_form.css';
+
+  return $element;
+}
+
+/**
+ * Callback for AJAX submit from the library.
+ *
+ * @todo Fix hardcoded Google API key.
+ * @ingroup forms
+ */
+function cke_placeholder_library_oembed_callback($form, $form_state) {
+  $form['oembed']['oembed_url']['#default_value'] = NULL;
+  $form['oembed']['#attributes']['class'][] = 'active';
+  $form_state['rebuild'] = TRUE;
+  $path = drupal_get_path('module', 'cke_placeholder');
+  $no_oembed = FALSE;
+  $caption = '';
+  $oembed = 0;
+  $thumbnail = '/' . $path . '/assets/embed_icon.png';
+
+  $url = $form_state['values']['oembed']['oembed_url'];
+
+  // Check common (FB and GMaps) embed types.
+  $matches = array();
+  if (preg_match('/<div id="fb-root">.*data-href="(https:\/\/www.facebook.com(\/\w*|-*)+)"/i', $url, $matches)) {
+    $url = '';
+    if (!empty($matches[1])) {
+      $url = $matches[1];
+    }
+    $no_oembed = TRUE;
+  }
+
+  if (preg_match('/google\.(com|dk)\/maps[^@]*@([0-9]+\.[0-9]*),([0-9]+\.[0-9]*)/i', $url, $matches)) {
+    $url = 'https://www.google.com/maps/embed/v1/place?q=' . $matches[2] . ',' . $matches[3] . '&key=AIzaSyBrqNkMVpMtC2QxaBWDztnblW6dr4Hizrg';
+    $no_oembed = TRUE;
+  }
+
+  $url_parts = parse_url($url);
+  $title = $url_parts['host'];
+
+  if (!$no_oembed) {
+    $response = oembed_get_data($url);
+    if (!empty($response['html'])) {
+      $caption = $response['title'];
+      $oembed = 1;
+      $thumbnail = !empty($response['thumbnail_url']) ? $response['thumbnail_url'] : $thumbnail;
+      $title = empty($response['title']) ? $response['author_name'] : $response['title'];
+    }
+  }
+
+  $drag_markup = theme('cke_placeholder_library_item', array(
+    'title' => $title,
+    'thumbnail_url' => $thumbnail,
+    'caption' => $caption,
+    'type_class' => 'oembed',
+    'cke_placeholder_tag' => 'cke_placeholder_embed',
+    'data_attributes' => array(
+      'oembed' => $oembed,
+      'url' => urlencode($url),
+      'type' => 'embed',
+    ),
+  ));
+  $form['oembed']['#prefix'] = '<div id="oembed-wrap" class="active cke-placeholder-fieldset-wrapper">';
+  $form['oembed']['oembed_url']['#prefix'] = $drag_markup;
+
+  return render($form['oembed']);
+}
+
+/**
+ * Helper function to extract placeholders from a text.
+ */
+function cke_placeholder_extract_placeholders($text = '') {
+  $matches = array();
+  $filter_regex = "/(<!--\s*)?\[(?<tag>[^]:]+):(?<args>(?:[^]\\\]|\\\.)*)\](\s*-->)?/";
+
+  preg_match_all($filter_regex, $text, $matches);
+
+  $placeholders = array();
+  foreach ($matches['tag'] as $index => $match) {
+    $placeholders[] = drupal_json_decode(str_replace("\\]", "]", $matches['args'][$index]));
+  }
+  return $placeholders;
+}
+
+/**
+ * Implements hook_ajax_render_alter().
+ */
+function cke_placeholder_ajax_render_alter(&$commands) {
+  if (isset($_POST['form_id']) && $_POST['form_id'] == 'cke_placeholder_upload_form') {
+    // Get the form from the cache.
+    list($form, $form_state) = ajax_get_form();
+
+    // Re-process since new fields were added after file upload.
+    drupal_process_form($form['#form_id'], $form, $form_state);
+
+    // Render the missing part of the form - file details which depend on the
+    // file type uploaded.
+    $output = drupal_render($form['cke_placeholder_file_upload']['file_details']);
+    $commands[] = ajax_command_replace('#cke-placeholder-file-upload-details', $output);
+  }
+}

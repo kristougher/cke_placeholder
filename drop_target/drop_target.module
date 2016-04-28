@@ -1,0 +1,203 @@
+<?php
+/**
+ * @file
+ * A drag and drop widget for entity reference-, file- and image fields.
+ */
+
+/**
+ * Implements hook_field_widget_form().
+ */
+function drop_target_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
+  switch ($field['type']) {
+    case 'image':
+    case 'file':
+      $target_column = 'fid';
+      break;
+
+    case 'entityreference':
+      $target_column = 'target_id';
+      break;
+
+    default:
+      $target_column = 'value';
+  }
+
+  _drop_target_widget_init($element, $field['field_name'], $form, $form_state);
+
+  $title = '';
+  $entity = NULL;
+  $prefix = '<div class="cke-placeholder-droptarget-trash" title="' . t('Remove') . '">' . t('Remove') . '</div>';
+  $fid = '';
+
+  if (!isset($form_state['values'][$field['field_name']][$langcode][$delta]['fid']) && !empty($items[$delta][$target_column])) {
+    $fid = $items[$delta][$target_column];
+  }
+  elseif (isset($form_state['values'][$field['field_name']][$langcode][$delta]['fid'])) {
+    $fid = $form_state['values'][$field['field_name']][$langcode][$delta]['fid'];
+  }
+
+  if (!empty($fid)) {
+    $entity = file_load($fid);
+    $title = $entity->title;
+  }
+  $element['db_target_column'] = array(
+    '#type' => 'hidden',
+    '#title' => 'Target DB column',
+    '#value' => $target_column,
+  );
+
+  $element[$target_column] = array(
+    '#type' => 'hidden',
+    '#title' => $title,
+    '#default_value' => $fid,
+    '#attributes' => array('class' => 'cke-placeholder-item'),
+  );
+
+  $element['reference_id'] = array(
+    '#type' => 'hidden',
+    '#title' => 'Reference element',
+    '#default_value' => $fid,
+  );
+
+  $element['display'] = array(
+    '#type' => 'hidden',
+    '#title' => 'display',
+    '#default_value' => 1,
+  );
+
+  $dimensions = '';
+
+  if (!empty($entity->metadata)) {
+    $dimensions = '<span class="droptarget-dimensions">' .
+      $entity->metadata['width'] . 'x' . $entity->metadata['height'] .
+      '</span>';
+  }
+
+  // If the value is exactly '0' it is a deleted field, that will not be
+  // displayed, but needs to be there to be unregistered.
+  if (strval(trim($fid)) === '0') {
+    $element[$target_column]['#attributes']['class'] = array('cke-placeholder-hidden-target');
+    return $element;
+  }
+  if (empty($entity)) {
+    $element[$target_column]['#attributes']['class'] = array('cke-placeholder-input-target');
+  }
+  else {
+    $element['preview'] = file_view($entity, 'preview');
+    $element[$target_column]['#prefix'] = $prefix;
+  }
+
+  if ($field['cardinality'] != '-1') {
+    $target_id = 'droptarget-wrap-' . $instance['field_name'];
+    $element['#prefix'] = '<div id="' . $target_id . '" class="droptarget-target">'
+      . '<label>' . $instance['label'] . '</label>';
+    $element['#suffix'] = '</div>';
+
+    // When ajax is triggered node edit form is submitted and validated so we
+    // need to disable validation of all fields having drop_target as widget.
+    // For that we limit validation to only these fields for EVERY field having
+    // drop_target as widget.
+    switch ($instance['entity_type']) {
+      case 'node':
+        $all_fields = field_info_instances('node', $form['#node']->type);
+        break;
+
+      case 'taxonomy_term':
+        $all_fields = field_info_instances('taxonomy_term', $form['#entity']->vocabulary_machine_name);
+        break;
+
+      default:
+        // Todo: Should probably look up bundle keys for the found entity...
+        $all_fields = field_info_instances($instance['entity_type'], $form['#' . $instance['entity_type']]->type);
+        break;
+    }
+
+    $drop_target_widgets = array();
+
+    foreach ($all_fields as $field_name => $info) {
+      if (!empty($info['widget']['module']) && $info['widget']['module'] == 'drop_target') {
+        $drop_target_widgets[] = array($field_name);
+      }
+    }
+
+    $element['refresh'] = array(
+      '#type' => 'button',
+      '#value' => 'refresh',
+      '#name' => 'btn_' . $field['field_name'],
+      '#attributes' => array(
+        'class' => array('droptarget-hidden'),
+      ),
+      '#ajax' => array(
+        'wrapper' => $target_id,
+        'callback' => 'drop_target_single_widget_callback',
+        'method' => 'replace',
+      ),
+      '#limit_validation_errors' => $drop_target_widgets,
+    );
+  }
+
+  return $element;
+}
+
+/**
+ * AJAX callback for single image fields.
+ *
+ * @ingroup forms.
+ */
+function drop_target_single_widget_callback($form, &$form_state) {
+  $form_state['rebuild'] = TRUE;
+  $field_name = str_replace('btn_', '', $form_state['triggering_element']['#name']);
+  return $form[$field_name];
+}
+
+/**
+ * Includes JS and dependencies for the droptarget widget.
+ *
+ * Use static variable to prevent from running more than once.
+ */
+function _drop_target_widget_init(&$element, $field_name, &$form, &$form_state) {
+  $run_once = &drupal_static(__FUNCTION__ . $field_name);
+
+  if ($run_once) {
+    return;
+  }
+  $run_once = TRUE;
+}
+
+/**
+ * Implements hook_media_field_widget_info().
+ *
+ * Register the droptarget widget for use with customized library.
+ */
+function drop_target_field_widget_info() {
+  $widgets = array();
+
+  $widgets['droptarget'] = array(
+    'label' => t('Drop target'),
+    'field types' => array('entityreference', 'file', 'image'),
+    'settings' => array('types' => array('video', 'image', 'document')),
+  );
+  return $widgets;
+}
+
+/**
+ * Implements hook_field_widget_settings_form().
+ *
+ * Add a type selector for drop target widget instance.
+ */
+function drop_target_field_widget_settings_form($field, $instance) {
+  $form = array();
+
+  $form['types'] = array(
+    '#title' => t('Allowed types'),
+    '#type' => 'checkboxes',
+    '#options' => array(
+      'video' => t('Video'),
+      'image' => t('Image'),
+      'document' => t('Document'),
+    ),
+    '#default_value' => $instance['widget']['settings']['types'],
+  );
+
+  return $form;
+}
