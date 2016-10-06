@@ -1,5 +1,0 @@
-name = CKEditor Placeholder
-description = API module for handling placeholders for embedded widgets in CKEditor.
-core = 7.x
-package = CKEditor
-dependencies[] = ckeditor
