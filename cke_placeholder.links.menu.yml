@@ -1,0 +1,5 @@
+cke_placeholder.cke_placeholder_settings:
+  route_name: cke_placeholder.cke_placeholder_settings
+  title: 'Administer media file settings'
+  description: 'Configure allowed file extensions'
+  parent: system.admin_config_content

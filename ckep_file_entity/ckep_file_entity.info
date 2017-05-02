@@ -1,0 +1,12 @@
+name = CKEditor Placeholder File Entity
+description = Insert file entities in CKEditor fields.
+core = 7.x
+package = CKEditor
+dependencies[] = cke_placeholder
+
+; Information added by Drupal.org packaging script on 2016-09-30
+version = "7.x-1.x-dev"
+core = "7.x"
+project = "cke_placeholder"
+datestamp = "1475228045"
+
