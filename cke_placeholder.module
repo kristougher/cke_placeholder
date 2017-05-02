@@ -465,11 +465,11 @@ function _cke_placeholder_form_js_include(&$element, &$form_state) {
 
 
   $path = drupal_get_path('module', 'cke_placeholder');
-
+  /*
   $element['#attached'] = array(
     'js' => array($path . '/assets/cke_placeholder_form_library.js', $path . '/assets/cke_placeholder_object.js'),
     'css' => array($path . '/assets/cke_placeholder_form.css'),
-  );
+  ); */
 
   return $element;
 }
@@ -481,7 +481,17 @@ function _cke_placeholder_form_js_include(&$element, &$form_state) {
  */
 function cke_placeholder_element_info_alter(&$type) {
   if (isset($type['text_format'])) {
-    $type['text_format']['#process'][] = 'cke_placeholder_text_format_proccess';
+   
+    $type['text_format']['#attached']['drupalSettings']['cke_placeholder'] = array(
+    'cke_placeholder' => array(
+      'filter' => cke_placeholder_tags(),
+      'editors' => array(),
+    )
+      );
+    $type['text_format']['#attached']['js'][] = $path . '/js_drupal/cke_placeholder_form.js';
+    $type['text_format']['#attached']['js'][] = $path . '/assets/cke_placeholder_form_library.js';
+    $type['text_format']['#attached']['js'][] = $path . '/assets/cke_placeholder_object.js';
+    $type['text_format']['#attached']['css'][] = $path . '/assets/cke_placeholder_form.css';
   }
 }
 
@@ -493,40 +503,6 @@ function cke_placeholder_element_info_alter(&$type) {
  * Otherwise we will receive js error.
  *
  */
-function cke_placeholder_text_format_proccess($element) {
-  $path = drupal_get_path('module', 'cke_placeholder') . '/js_drupal/cke_placeholder_form.js';
-  // @FIXME
-// The Assets API has totally changed. CSS, JavaScript, and libraries are now
-// attached directly to render arrays using the #attached property.
-// 
-// 
-// @see https://www.drupal.org/node/2169605
-// @see https://www.drupal.org/node/2408597
-// drupal_add_js($path, array('type' => 'file'));
-
-
-  // @FIXME
-// The Assets API has totally changed. CSS, JavaScript, and libraries are now
-// attached directly to render arrays using the #attached property.
-// 
-// 
-// @see https://www.drupal.org/node/2169605
-// @see https://www.drupal.org/node/2408597
-// drupal_add_js(array(
-//     'cke_placeholder' => array(
-//       'filter' => cke_placeholder_tags(),
-//       'editors' => array(),
-//     ),
-//   ), array('type' => 'setting'));
-
-
-  $path = drupal_get_path('module', 'cke_placeholder');
-  $element['#attached']['js'][] = $path . '/assets/cke_placeholder_form_library.js';
-  $element['#attached']['js'][] = $path . '/assets/cke_placeholder_object.js';
-  $element['#attached']['css'][] = $path . '/assets/cke_placeholder_form.css';
-
-  return $element;
-}
 
 /**
  * Callback for AJAX submit from the library.
