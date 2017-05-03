@@ -65,11 +65,13 @@ class DefaultController extends ControllerBase {
       \Drupal::moduleHandler()->invoke('admin_menu', 'suppress');
     }
 
-    $output = [
+ /*   $output = [
       '#theme' => 'cke_placeholder_update_done',
       'fid' => $file->fid,
       'title' => $file->filename
     ];
+  * 
+  */
 
     return $output;
   }

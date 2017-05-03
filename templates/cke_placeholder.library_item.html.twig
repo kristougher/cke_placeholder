@@ -11,7 +11,7 @@
         <div
           draggable="true"
           class="cke-placeholder-draggable"
-          ondragstart="ckePlaceholder.dragStart(event, '<?php print $cke_placeholder_tag; ?>')"
+          ondragstart="ckePlaceholder.dragStart(event, '{{ cke_placeholder_tag }}')"
           {% for  value in item.data %}
             data-{{ value.key }}={{ value.key }}
 
