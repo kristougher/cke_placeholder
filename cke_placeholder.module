@@ -17,29 +17,6 @@ function cke_placeholder_help($route_name, RouteMatchInterface $route_match) {
       return t('<p>The CKE placeholder filter handling placeholders for embedded widgets in CKEditor.</p>');
   }
 }
-/**
- * Implements hook_ckeditor_plugin().
- *
- * Add plugins in the array and the corresponding plugin
- * folder in the module´s /js folder.
- */
-/*
-function cke_placeholder_ckeditor_plugin() {
-  $path = drupal_get_path('module', 'cke_placeholder');
-
-  return array(
-    'cke_placeholder' => array(
-      'name' => 'cke_placeholder',
-      'desc' => t('CKE Placeholder - Apply JS and PHP filters for using placeholders in custom plugins.'),
-      'path' => $path . '/cke_placeholder/',
-    ),
-    'cke_link_text' => array(
-      'name' => 'cke_link_text',
-      'desc' => t('Extend CKEditor built-in link plugin by making link\'s text editable.'),
-      'path' => $path . '/cke_link_text/',
-    ),
-  );
-} */
 
 /**
  * Implements hook_filter_info().
@@ -131,23 +108,6 @@ function cke_placeholder_filter_process_callback($match, $set_filter = NULL) {
   }
 
   return $match[0];
-}
-
-/**
- * Returns available tags for filter.
- */
-function cke_placeholder_tags($name = NULL) {
-  $tags = &drupal_static(__FUNCTION__, array());
-
-  if (!$tags) {
-    $tags = \Drupal::moduleHandler()->invokeAll('cke_placeholder_tags');
-    \Drupal::moduleHandler()->alter('cke_placeholder_tags', $tags);
-  }
-  if (!empty($name)) {
-    return isset($tags[$name]) ? $tags[$name] : NULL;
-  }
-
-  return $tags;
 }
 
 /**

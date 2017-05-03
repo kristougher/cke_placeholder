@@ -2,7 +2,7 @@
 
 /**
  * @file
- * Contains \Drupal\linkit\Plugin\CKEditorPlugin\Linkit.
+ * Contains \Drupal\linkit\Plugin\CKEditorPlugin\CKEPlaceholder.
  */
 
 namespace Drupal\cke_placeholder\Plugin\CKEditorPlugin;
@@ -29,7 +29,7 @@ class CKEPlaceholder extends CKEditorPluginBase implements CKEditorPluginConfigu
   /**
    * {@inheritdoc}
    */
-  public function __construct(array $configuration, $plugin_id, $plugin_definition, EntityStorageInterface $linkit_profile_storage) {
+  public function __construct(array $configuration, $plugin_id, $plugin_definition) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
   //  $this->linkitProfileStorage = $linkit_profile_storage;
   }
@@ -52,65 +52,4 @@ class CKEPlaceholder extends CKEditorPluginBase implements CKEditorPluginConfigu
   public function getFile() {
     return drupal_get_path('module', 'cke_placeholder') . '/js/plugins/cke_placeholder/plugin.js';
   }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getConfig(Editor $editor) {
-    return array(
-      'linkit_dialogTitleAdd' => t('Add link'),
-      'linkit_dialogTitleEdit' => t('Edit link'),
-    );
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function getButtons() {
-    return array(
-      'Linkit' => array(
-        'label' => t('Linkit'),
-        'image' => drupal_get_path('module', 'linkit') . '/js/plugins/linkit/linkit.png',
-      ),
-    );
-  }
-
-  /**
-   * {@inheritdoc}
-   */
-  public function settingsForm(array $form, FormStateInterface $form_state, Editor $editor) {
-    $settings = $editor->getSettings();
-
-    $all_profiles = $this->linkitProfileStorage->loadMultiple();
-
-    $options = array();
-    foreach ($all_profiles as $profile) {
-      $options[$profile->id()] = $profile->label();
-    }
-
-    $form['linkit_profile'] = array(
-      '#type' => 'select',
-      '#title' => t('Select a linkit profile'),
-      '#options' => $options,
-      '#default_value' => isset($settings['plugins']['linkit']) ? $settings['plugins']['linkit'] : '',
-      '#empty_option' => $this->t('- Select profile -'),
-      '#description' => $this->t('Select the linkit profile you wish to use with this text format.'),
-      '#element_validate' => array(
-        array($this, 'validateLinkitProfileSelection'),
-      ),
-    );
-
-    return $form;
-  }
-
-  /**
-   * #element_validate handler for the "linkit_profile" element in settingsForm().
-   */
-  public function validateLinkitProfileSelection(array $element, FormStateInterface $form_state) {
-    $toolbar_buttons = $form_state->getValue(array('editor', 'settings', 'toolbar', 'button_groups'));
-    if (strpos($toolbar_buttons, '"Linkit"') !== FALSE && empty($element['#value'])) {
-      $form_state->setError($element, t('Please select the linkit profile you wish to use.'));
-    }
-  }
-
 }

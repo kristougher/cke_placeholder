@@ -19,6 +19,7 @@ use Drupal\Core\Url;
  * )
  */
 class CKEPlaceholderFilter extends FilterBase {
+
   /**
    * {@inheritdoc}
    */
@@ -40,6 +41,21 @@ class CKEPlaceholderFilter extends FilterBase {
     /**
      * @TODO
      */
+  }
+  /**
+   * Returns available tags for filter.
+   * @return type
+   */
+  public function getCKEPlaceholderTags() {
+    $tags = &drupal_static(__FUNCTION__, array());
+
+    if (!$tags) {
+      $tags = \Drupal::moduleHandler()->invokeAll('cke_placeholder_tags');
+      \Drupal::moduleHandler()->alter('cke_placeholder_tags', $tags);
+    }
+    if (!empty($name)) {
+      return isset($tags[$name]) ? $tags[$name] : NULL;
+    }
   }
 
 }

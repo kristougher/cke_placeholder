@@ -1,0 +1,27 @@
+{# 
+/**
+ * @file
+ * Library item template, used on node form.
+ */
+#}
+{% if no_wrapper is not empty %}
+<div id="{{ wrapper_id}}" class="cke-placeholder-list {{ cke_placeholder_tag }} {{ cke_placeholder_tag }}-wrap">
+{% endif %}
+    {% for item in items %}
+        <div
+          draggable="true"
+          class="cke-placeholder-draggable"
+          ondragstart="ckePlaceholder.dragStart(event, '<?php print $cke_placeholder_tag; ?>')"
+          {% for  value in item.data %}
+            data-{{ value.key }}={{ value.key }}
+
+          {% endfor %}
+          >
+          {{ item.markup }}
+        </div>
+    {% endfor %}
+{% if no_wrapper is not empty %}
+</div>
+{% endif %}
+
+
