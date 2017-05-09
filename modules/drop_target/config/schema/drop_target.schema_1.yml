@@ -1,0 +1,9 @@
+field.widget.settings.[drop_target]:
+  type: mapping
+  label: 'Drop Target widget settings'
+  mapping:
+    type:
+      type: string
+      label: 'Type'
+      
+      

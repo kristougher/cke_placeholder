@@ -5,6 +5,12 @@
  */
 
 /**
+ * Implements hook_help().
+ */
+function drop_target_help() {
+
+}
+/**
  * Implements hook_field_widget_form().
  */
 function drop_target_field_widget_form(&$form, &$form_state, $field, $instance, $langcode, $items, $delta, $element) {
@@ -35,7 +41,7 @@ function drop_target_field_widget_form(&$form, &$form_state, $field, $instance, 
   elseif (isset($form_state['values'][$field['field_name']][$langcode][$delta]['fid'])) {
     $fid = $form_state['values'][$field['field_name']][$langcode][$delta]['fid'];
   }
-
+  dpm($fid);
   if (!empty($fid)) {
     $entity = file_load($fid);
     $title = $entity->title;
@@ -67,7 +73,7 @@ function drop_target_field_widget_form(&$form, &$form_state, $field, $instance, 
 
   $dimensions = '';
 
-  if (!empty($entity->metadata)) {
+  if (!empty($entity->getTranslation())) {
     $dimensions = '<span class="droptarget-dimensions">' .
       $entity->metadata['width'] . 'x' . $entity->metadata['height'] .
       '</span>';
@@ -150,54 +156,5 @@ function drop_target_single_widget_callback($form, &$form_state) {
   return $form[$field_name];
 }
 
-/**
- * Includes JS and dependencies for the droptarget widget.
- *
- * Use static variable to prevent from running more than once.
- */
-function _drop_target_widget_init(&$element, $field_name, &$form, &$form_state) {
-  $run_once = &drupal_static(__FUNCTION__ . $field_name);
 
-  if ($run_once) {
-    return;
-  }
-  $run_once = TRUE;
-}
 
-/**
- * Implements hook_media_field_widget_info().
- *
- * Register the droptarget widget for use with customized library.
- */
-function drop_target_field_widget_info() {
-  $widgets = array();
-
-  $widgets['droptarget'] = array(
-    'label' => t('Drop target'),
-    'field types' => array('entityreference', 'file', 'image'),
-    'settings' => array('types' => array('video', 'image', 'document')),
-  );
-  return $widgets;
-}
-
-/**
- * Implements hook_field_widget_settings_form().
- *
- * Add a type selector for drop target widget instance.
- */
-function drop_target_field_widget_settings_form($field, $instance) {
-  $form = array();
-
-  $form['types'] = array(
-    '#title' => t('Allowed types'),
-    '#type' => 'checkboxes',
-    '#options' => array(
-      'video' => t('Video'),
-      'image' => t('Image'),
-      'document' => t('Document'),
-    ),
-    '#default_value' => $instance['widget']['settings']['types'],
-  );
-
-  return $form;
-}
