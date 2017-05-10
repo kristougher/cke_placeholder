@@ -7,6 +7,7 @@
 
 
 use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Form\FormStateInterface;
 
 /**
  * Implements hook_help().
@@ -23,37 +24,84 @@ function cke_placeholder_help($route_name, RouteMatchInterface $route_match) {
  * Implements hook_theme().
  */
 function cke_placeholder_theme() {
-  $themes = array();
-
-  $themes['cke_placeholder_source_pane'] = array(
-    'variables' => array(
-      'source_items' => array(),
-      'offset' => NULL,
+  $themes = [
+    'cke_placeholder_source_pane' => [
+      'variables' => [
+        'source_items' => [],
+        'offset' => NULL,
       'display_pager' => NULL,
-    ),
-    'template' => 'templates/cke_placeholder.source_pane',
-  );
-
-  $themes['cke_placeholder_library_item'] = array(
-    'variables' => array(
-      'cke_placeholder_tag' => NULL,
-      'wrapper_id' => NULL,
-      'items' => array(),
+      ],
+      'template' => 'templates/cke_placeholder.source_pane',
+    ],
+    'cke_placeholder_library_item' => [
+      'variables' => [
+         'cke_placeholder_tag' => NULL,
+         'wrapper_id' => NULL,
+         'items' => array(),
       'no_wrapper' => NULL,
-    ),
-    'template' => 'templates/cke_placeholder.library_item',
-  );
-
-  $themes['cke_placeholder_update_done'] = array(
-    'variables' => array(
-      'fid' => NULL,
-      'title' => NULL,
-      'caption' => NULL,
-    ),
-    'template' => 'templates/cke_placeholder.update_done',
-  );
+      ],
+     'template' => 'templates/cke_placeholder.library_item',
+    ],
+    'cke_placeholder_update_done' => [
+      'variables' => [
+        'fid' => NULL,
+        'title' => NULL,
+        'caption' => NULL,
+      ],
+      'template' => 'templates/cke_placeholder.update_done',
+    ]
+  ];
 
   return $themes;
+}
+
+/**
+ * Preg_replace callback for the filter.
+ *
+ * @param array $match
+ *   Regex matches.
+ */
+function cke_placeholder_filter_process_callback($match, $set_filter = NULL) {
+  static $currently_processing = array();
+  static $filter = NULL;
+
+  if (!empty($set_filter)) {
+    $filter = $set_filter;
+    return;
+  }
+
+  if ($tag = cke_placeholder_tags($match['tag'])) {
+    if (isset($tag['css']) && count($tag['css'])) {
+      foreach ($tag['css'] as $css) {
+        drupal_add_css($css);
+      }
+    }
+
+    if (isset($tag['js']) && count($tag['js'])) {
+      foreach ($tag['js'] as $js) {
+        drupal_add_js($js);
+      }
+    }
+
+    if (function_exists($tag['process'])) {
+      $function = $tag['process'];
+
+      $args = drupal_json_decode(str_replace("\\]", "]", $match['args']));
+      $lock_key = substr($function . ':' . md5($match['args']), 0, 100);
+      // Make sure that we don't process elements recursively.
+      if (isset($currently_processing[$lock_key])) {
+        return $match[0];
+      }
+      else {
+        $currently_processing[$lock_key] = TRUE;
+        $output = $function($args, $filter);
+        unset($currently_processing[$lock_key]);
+        return $output;
+      }
+    }
+  }
+
+  return $match[0];
 }
 
 /**
@@ -72,16 +120,13 @@ function cke_placeholder_tags($name = NULL) {
 
   return $tags;
 }
+
 /**
  * Implements hook_form_alter().
- *
- * Reads the static variable from cke_placeholder_field_widget_form_alter and
- * adds a media library if necessary.
  */
-function cke_placeholder_form_alter(&$form, \Drupal\Core\Form\FormStateInterface &$form_state, $form_id) {
+function cke_placeholder_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
   $library_add = drupal_static('cke_placeholder_field_widget_form_alter');
   $library_added = &drupal_static(__FUNCTION__);
-
   if (!isset($library_add)) {
     foreach ($form as $element) {
       if (is_array($element) && isset($element['#cke_tabs'])) {
@@ -90,29 +135,18 @@ function cke_placeholder_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
       }
     }
   }
-
   if ((isset($library_add) && !isset($library_added) && ($form_id != 'cke_placeholder_library_form'))
     || isset($cke_tabs_widget)) {
-    $form['#attached']['library'][] = 'system/ui.dialog';
-    $form['#after_build'][] = '_cke_placeholder_add_media_library';
+    $form['attached']['library'][] =  'system/ui.dialog';
+     // Invoke all the hook calls.
+    $library_panes = Drupal::moduleHandler()->invokeAll('cke_placeholder_library');
+    // Add options to b altered.
+    Drupal::moduleHandler()->alter('cke_placeholder_library', $library_panes);
+    // Get the tab panes content (and the respective forms).
+    $cke_tabs = _cke_placeholder_get_tab_panes($form_state, $library_add, $library_panes);
+    $form['#suffix'] = render($cke_tabs);
     $library_added = TRUE;
   }
-
-}
-
-/**
- * Wrapper to add the media library in after_build.
- */
-function _cke_placeholder_add_media_library(&$form, &$form_state) {
-  $library_add = drupal_static('cke_placeholder_field_widget_form_alter');
-
-  if (!isset($library_add)) {
-    $library_add = _cke_placeholder_get_dynamic_library();
-  }
-
-  _cke_placeholder_media_library($form, $form_state, $library_add);
-
-  return $form;
 }
 
 function _cke_placeholder_get_dynamic_library() {
@@ -125,80 +159,6 @@ function _cke_placeholder_get_dynamic_library() {
     ),
     'upload_file' => array(TRUE),
   );
-}
-
-/**
- * Implements hook_field_widget_form_alter().
- */
-function cke_placeholder_field_widget_form_alter(&$element, &$form_state, $context) {
-  $library_add = &drupal_static(__FUNCTION__);
-
-  $cke_placeholder_widgets = array(
-    'text_textarea_with_summary' => array(
-      'cke_placeholder_library' => array(
-        // 'image' and 'document' below are file types as provided by
-        // file_entity. They are used directly in querying file_managed table.
-        'image' => 'image',
-      ),
-      'cke_placeholder_document_library' => array(
-        // This is file type as provided by file_entity.
-        'document' => 'document',
-      ),
-      'upload_file' => array(TRUE),
-    ),
-    'text_textarea' => array(
-      'cke_placeholder_library' => array(
-        'image' => 'image',
-      ),
-      'cke_placeholder_document_library' => array(
-        'document' => 'document',
-      ),
-      'upload_file' => array(TRUE),
-    ),
-  );
-
-  if ($context['instance']['widget']['type'] == 'droptarget') {
-    $cke_placeholder_widgets['droptarget'] = array(
-      'cke_placeholder_library' => $context['instance']['widget']['settings']['types'],
-      'upload_file' => $context['instance']['widget']['settings']['types'],
-    );
-  }
-
-  \Drupal::moduleHandler()->alter('cke_placeholder_field_widget', $cke_placeholder_widgets);
-
-  if (empty($context['instance']['widget']['type'])
-    || empty($cke_placeholder_widgets[$context['instance']['widget']['type']])) {
-    return;
-  }
-
-  if (!isset($library_add)) {
-    $library_add = array();
-    $element['#after_build'][] = '_cke_placeholder_form_js_include';
-  }
-
-  $library_add = array_merge($cke_placeholder_widgets[$context['instance']['widget']['type']], $library_add);
-}
-
-/**
- * Add media library to the form.
- *
- * @param array $form
- *   Standard Drupal form array.
- * @param array $form_state
- *   Form state array.
- */
-function _cke_placeholder_media_library(array &$form, array $form_state, $library_add) {
-  if (empty($library_add)) {
-    $library_add = array();
-  }
-
-  // Invoke all the hook calls.
-  $library_panes = \Drupal::moduleHandler()->invokeAll('cke_placeholder_library');
-  \Drupal::moduleHandler()->alter('cke_placeholder_library', $library_panes);
-
-  // Get the tab panes content (and the respective forms).
-  $cke_tabs = _cke_placeholder_get_tab_panes($form_state, $library_add, $library_panes);
-  $form['#suffix'] = render($cke_tabs);
 }
 
 /**
@@ -250,7 +210,7 @@ function _cke_placeholder_get_tab_panes(&$form_state, $library_add, $library_pan
     if (isset($pane['form'])
       && function_exists($pane['form'])) {
       $form_settings = isset($library_add[$pane_name]) ? $library_add[$pane_name] : array();
-      $form = \Drupal::formBuilder()->getForm($pane['form'], $form_settings);
+      $form = drupal_get_form($pane['form'], $form_settings);
 
       $pane_content .= render($form);
     }
@@ -261,20 +221,11 @@ function _cke_placeholder_get_tab_panes(&$form_state, $library_add, $library_pan
         $pane_list_id = $pane['list_wrapper_id'];
       }
       $list_items = call_user_func($pane['list_callback'], $form_state, $form_settings);
-      // @FIXME
-// theme() has been renamed to _theme() and should NEVER be called directly.
-// Calling _theme() directly can alter the expected output and potentially
-// introduce security issues (see https://www.drupal.org/node/2195739). You
-// should use renderable arrays instead.
-// 
-// 
-// @see https://www.drupal.org/node/2195739
-// $pane_content .= theme('cke_placeholder_library_item', array(
-//         'cke_placeholder_tag' => $pane_name,
-//         'items' => $list_items,
-//         'wrapper_id' => $pane_list_id,
-//       ));
-
+      $pane_content .= theme('cke_placeholder_library_item', array(
+        'cke_placeholder_tag' => $pane_name,
+        'items' => $list_items,
+        'wrapper_id' => $pane_list_id,
+      ));
     }
 
     $panes['panes_wrapper'][$pane_name] = array(
@@ -292,9 +243,65 @@ function _cke_placeholder_get_tab_panes(&$form_state, $library_add, $library_pan
 }
 
 /**
+ * Implements hook_field_widget_form_alter().
+ */
+function cke_placeholder_field_widget_form_alter(&$element, \Drupal\Core\Form\FormStateInterface $form_state, $context) {
+
+  $library_add = &drupal_static(__FUNCTION__);
+  switch (get_class($context['widget'])) {
+    case 'Drupal\text\Plugin\Field\FieldWidget\TextareaWithSummaryWidget':
+      $cke_placeholder_widgets['TextareaWithSummaryWidget'] = [
+        'cke_placeholder_library' => [
+        // 'image' and 'document' below are file types as provided by
+        // file_entity. They are used directly in querying file_managed table.
+          'image' => 'image',
+        ],
+        'cke_placeholder_document_library' => [
+        // This is file type as provided by file_entity.
+          'document' => 'document',
+        ],
+        'upload_file' => [TRUE],
+      ];
+      break;
+    case 'Drupal\text\Plugin\Field\FieldWidget\TextareaWidget':
+      $cke_placeholder_widgets['TextareaWidget'] = [
+        'cke_placeholder_library' => [
+          'image' => 'image',
+        ],
+        'cke_placeholder_document_library' => [
+          'document' => 'document',
+        ],
+        'upload_file' => [TRUE],
+      ];
+      break;
+    default :
+      $cke_placeholder_widgets = [];
+  }
+  // Add option other modules, which implements a new widget to USE CKE placeholder functionality.
+  Drupal::moduleHandler()->alter('cke_placeholder_field_widget', $cke_placeholder_widgets, $context['widget']);
+
+  if (!empty($cke_placeholder_widgets)) {
+    if (!isset($library_add)) {
+      $library_add = [];
+      $path = drupal_get_path('module', 'cke_placeholder');
+      $element['#attached']['library'][] = 'cke_placeholder/cke_placeholder_forms';
+      $element['#attached']['drupalSettings'] = [
+          'cke_placeholder' => [
+            'filter' => cke_placeholder_tags(),
+            'editors' => [],
+          ],
+      ];
+    }
+    $library_add = array_merge($cke_placeholder_widgets, $library_add);
+   }
+ }
+
+
+
+/**
  * Load required JS.
  */
-function _cke_placeholder_form_js_include(&$element, &$form_state) {
+function _cke_placeholder_form_js_include(&$element, &$form_state) { var_dump("DASDAS");
   $library_add = &drupal_static('cke_placeholder_field_widget_form_alter');
 
   if (!isset($library_add)) {
@@ -305,7 +312,7 @@ function _cke_placeholder_form_js_include(&$element, &$form_state) {
     return;
   }
 
-  $instance = field_info_instance($element['#entity_type'], $element['#field_name'], $element['#bundle']);
+//  $instance = field_info_instance($element['#entity_type'], $element['#field_name'], $element['#bundle']);
 
   $cke_placeholder_widgets = array(
     'text_textarea_with_summary' => array(
@@ -335,175 +342,7 @@ function _cke_placeholder_form_js_include(&$element, &$form_state) {
   }
 
   $library_add = array_merge($cke_placeholder_widgets[$instance['widget']['type']], $library_add);
-  $path = drupal_get_path('module', 'cke_placeholder') . '/js_drupal/cke_placeholder_form.js';
-  // @FIXME
-// The Assets API has totally changed. CSS, JavaScript, and libraries are now
-// attached directly to render arrays using the #attached property.
-// 
-// 
-// @see https://www.drupal.org/node/2169605
-// @see https://www.drupal.org/node/2408597
-// drupal_add_js($path, array('type' => 'file'));
 
-
-  // @FIXME
-// The Assets API has totally changed. CSS, JavaScript, and libraries are now
-// attached directly to render arrays using the #attached property.
-// 
-// 
-// @see https://www.drupal.org/node/2169605
-// @see https://www.drupal.org/node/2408597
-// drupal_add_js(array(
-//     'cke_placeholder' => array(
-//       'filter' => cke_placeholder_tags(),
-//       'editors' => array(),
-//     ),
-//   ), array('type' => 'setting'));
-
-
-  $path = drupal_get_path('module', 'cke_placeholder');
-  /*
-  $element['#attached'] = array(
-    'js' => array($path . '/assets/cke_placeholder_form_library.js', $path . '/assets/cke_placeholder_object.js'),
-    'css' => array($path . '/assets/cke_placeholder_form.css'),
-  ); */
 
   return $element;
-}
-
-/**
- * Implements hook_element_info_alter().
- *
- * Adding new process function on text_format element.
- */
-function cke_placeholder_element_info_alter(&$type) {
-  if (isset($type['text_format'])) {
-   
-    $type['text_format']['#attached']['drupalSettings']['cke_placeholder'] = array(
-    'cke_placeholder' => array(
-      'filter' => cke_placeholder_tags(),
-      'editors' => array(),
-    )
-      );
-    $type['text_format']['#attached']['js'][] = $path . '/js_drupal/cke_placeholder_form.js';
-    $type['text_format']['#attached']['js'][] = $path . '/assets/cke_placeholder_form_library.js';
-    $type['text_format']['#attached']['js'][] = $path . '/assets/cke_placeholder_object.js';
-    $type['text_format']['#attached']['css'][] = $path . '/assets/cke_placeholder_form.css';
-  }
-}
-
-/**
- * Add libraries for cke_placeholder working.
- *
- * "Text format" element uses wysiwyg.
- * We have to add cke_placeholder libraries on that elements.
- * Otherwise we will receive js error.
- *
- */
-
-/**
- * Callback for AJAX submit from the library.
- *
- * @todo Fix hardcoded Google API key.
- * @ingroup forms
- */
-function cke_placeholder_library_oembed_callback($form, $form_state) {
-  $form['oembed']['oembed_url']['#default_value'] = NULL;
-  $form['oembed']['#attributes']['class'][] = 'active';
-  $form_state['rebuild'] = TRUE;
-  $path = drupal_get_path('module', 'cke_placeholder');
-  $no_oembed = FALSE;
-  $caption = '';
-  $oembed = 0;
-  $thumbnail = '/' . $path . '/assets/embed_icon.png';
-
-  $url = $form_state['values']['oembed']['oembed_url'];
-
-  // Check common (FB and GMaps) embed types.
-  $matches = array();
-  if (preg_match('/<div id="fb-root">.*data-href="(https:\/\/www.facebook.com(\/\w*|-*)+)"/i', $url, $matches)) {
-    $url = '';
-    if (!empty($matches[1])) {
-      $url = $matches[1];
-    }
-    $no_oembed = TRUE;
-  }
-
-  if (preg_match('/google\.(com|dk)\/maps[^@]*@([0-9]+\.[0-9]*),([0-9]+\.[0-9]*)/i', $url, $matches)) {
-    $url = 'https://www.google.com/maps/embed/v1/place?q=' . $matches[2] . ',' . $matches[3] . '&key=AIzaSyBrqNkMVpMtC2QxaBWDztnblW6dr4Hizrg';
-    $no_oembed = TRUE;
-  }
-
-  $url_parts = parse_url($url);
-  $title = $url_parts['host'];
-
-  if (!$no_oembed) {
-    $response = oembed_get_data($url);
-    if (!empty($response['html'])) {
-      $caption = $response['title'];
-      $oembed = 1;
-      $thumbnail = !empty($response['thumbnail_url']) ? $response['thumbnail_url'] : $thumbnail;
-      $title = empty($response['title']) ? $response['author_name'] : $response['title'];
-    }
-  }
-
-  // @FIXME
-// theme() has been renamed to _theme() and should NEVER be called directly.
-// Calling _theme() directly can alter the expected output and potentially
-// introduce security issues (see https://www.drupal.org/node/2195739). You
-// should use renderable arrays instead.
-// 
-// 
-// @see https://www.drupal.org/node/2195739
-// $drag_markup = theme('cke_placeholder_library_item', array(
-//     'title' => $title,
-//     'thumbnail_url' => $thumbnail,
-//     'caption' => $caption,
-//     'type_class' => 'oembed',
-//     'cke_placeholder_tag' => 'cke_placeholder_embed',
-//     'data_attributes' => array(
-//       'oembed' => $oembed,
-//       'url' => urlencode($url),
-//       'type' => 'embed',
-//     ),
-//   ));
-
-  $form['oembed']['#prefix'] = '<div id="oembed-wrap" class="active cke-placeholder-fieldset-wrapper">';
-  $form['oembed']['oembed_url']['#prefix'] = $drag_markup;
-
-  return render($form['oembed']);
-}
-
-/**
- * Helper function to extract placeholders from a text.
- */
-function cke_placeholder_extract_placeholders($text = '') {
-  $matches = array();
-  $filter_regex = "/(<!--\s*)?\[(?<tag>[^]:]+):(?<args>(?:[^]\\\]|\\\.)*)\](\s*-->)?/";
-
-  preg_match_all($filter_regex, $text, $matches);
-
-  $placeholders = array();
-  foreach ($matches['tag'] as $index => $match) {
-    $placeholders[] = \Drupal\Component\Serialization\Json::decode(str_replace("\\]", "]", $matches['args'][$index]));
-  }
-  return $placeholders;
-}
-
-/**
- * Implements hook_ajax_render_alter().
- */
-function cke_placeholder_ajax_render_alter(&$commands) {
-  if (isset($_POST['form_id']) && $_POST['form_id'] == 'cke_placeholder_upload_form') {
-    // Get the form from the cache.
-    list($form, $form_state) = ajax_get_form();
-
-    // Re-process since new fields were added after file upload.
-    \Drupal::formBuilder()->processForm($form['#form_id'], $form, $form_state);
-
-    // Render the missing part of the form - file details which depend on the
-    // file type uploaded.
-    $output = \Drupal::service("renderer")->render($form['cke_placeholder_file_upload']['file_details']);
-    $commands[] = ajax_command_replace('#cke-placeholder-file-upload-details', $output);
-  }
 }

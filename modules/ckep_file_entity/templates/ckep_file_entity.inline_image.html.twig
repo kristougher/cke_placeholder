@@ -1,0 +1,18 @@
+{#
+/**
+ * @file
+ * Template for inline images.
+ */
+#}
+<p>
+    <span class="body-text__picture {{ alignment_class }}">
+        <span class="picture">
+            {{ picture_tag }}
+        </span>
+        {% if caption not empty %}
+            <span class="body-text__picture__caption">
+                {{ caption }}
+            </span>
+        {% endif%}
+    </span>
+</p>

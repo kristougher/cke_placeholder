@@ -23,7 +23,7 @@ use Drupal\editor\Entity\Editor;
  *   module = "cke_placeholder"
  * )
  */
-class CKELinkText extends CKEditorPluginBase implements CKEditorPluginConfigurableInterface, ContainerFactoryPluginInterface {
+class CKELinkText extends CKEditorPluginBase implements CKEditorPluginConfigurableInterface {
 
   /**
    * {@inheritdoc}
@@ -31,14 +31,6 @@ class CKELinkText extends CKEditorPluginBase implements CKEditorPluginConfigurab
    */
   public function __construct(array $configuration, $plugin_id, $plugin_definition) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-  }
-
-  /**
-   * {@inheritdoc}
-   * @TODO
-   */
-  public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-  
   }
 
   /**
@@ -52,7 +44,28 @@ class CKELinkText extends CKEditorPluginBase implements CKEditorPluginConfigurab
    * {@inheritdoc}
    */
   public function getConfig(Editor $editor) {
+    return [];
+  }
 
+  /**
+   *
+   */
+  public function settingsForm(array $form, FormStateInterface $form_state, Editor $editor) {
+    $settings = $editor->getSettings();
+
+    return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getButtons() {
+    return array(
+      'Linkit' => array(
+        'label' => t('Linkit'),
+        'image' => drupal_get_path('module', 'linkit') . '/js/plugins/linkit/linkit.png',
+      ),
+    );
   }
 
 }

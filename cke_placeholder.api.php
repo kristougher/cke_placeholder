@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * API functions for cke_placeholder.
@@ -92,4 +93,20 @@ function hook_cke_placeholder_library_tab_info() {
  */
 function hook_cke_placeholder_library_tab_alter(&$tabs) {
   // Noop.
+}
+
+/**
+ * Implements hook_cke_placeholder_field_widget_alter().
+ */
+function cke_placeholder_cke_placeholder_field_widget_alter(&$cke_placeholder_widgets, Drupal\Core\Field\WidgetBase $widget) {
+  // Add new cke_placeholder widget.
+  switch (get_class($widget)) {
+    case 'Drupal\example\Plugin\Field\FieldWidget\ExampleWidget':
+      // Add something new widget.
+      $cke_placeholder_widgets['ExampleWidget'] = [
+        'cke_placeholder_library' => array_keys($context['widget']->getSetting('types')),
+        'upload_file' => array_keys($context['widget']->getSetting('types'))
+      ];
+      break;
+  }
 }

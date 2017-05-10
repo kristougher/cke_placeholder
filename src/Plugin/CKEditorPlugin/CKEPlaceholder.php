@@ -24,27 +24,15 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   module = "cke_placeholder"
  * )
  */
-class CKEPlaceholder extends CKEditorPluginBase implements CKEditorPluginConfigurableInterface, ContainerFactoryPluginInterface {
+class CKEPlaceholder extends CKEditorPluginBase implements CKEditorPluginConfigurableInterface {
 
-  /**
+   /**
    * {@inheritdoc}
+   * @TODO
    */
   public function __construct(array $configuration, $plugin_id, $plugin_definition) {
     parent::__construct($configuration, $plugin_id, $plugin_definition);
-  //  $this->linkitProfileStorage = $linkit_profile_storage;
   }
-
-  /**
-   * {@inheritdoc}
-   */
- /* public static function create(ContainerInterface $container, array $configuration, $plugin_id, $plugin_definition) {
-    return new static(
-      $configuration,
-      $plugin_id,
-      $plugin_definition,
-      $container->get('entity.manager')->getStorage('linkit_profile')
-    );
-  }*/
 
   /**
    * {@inheritdoc}
@@ -52,4 +40,33 @@ class CKEPlaceholder extends CKEditorPluginBase implements CKEditorPluginConfigu
   public function getFile() {
     return drupal_get_path('module', 'cke_placeholder') . '/js/plugins/cke_placeholder/plugin.js';
   }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getConfig(Editor $editor) {
+    return [];
+  }
+
+  /**
+   *
+   */
+  public function settingsForm(array $form, FormStateInterface $form_state, Editor $editor) {
+    $settings = $editor->getSettings();
+
+    return $form;
+  }
+
+  /**
+   * {@inheritdoc}
+   */
+  public function getButtons() {
+    return array(
+      'Linkit' => array(
+        'label' => t('Linkit'),
+        'image' => drupal_get_path('module', 'linkit') . '/js/plugins/linkit/linkit.png',
+      ),
+    );
+  }
+
 }

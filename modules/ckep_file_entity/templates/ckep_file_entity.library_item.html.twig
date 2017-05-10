@@ -1,0 +1,18 @@
+{#
+/**
+ * @file
+ * Library item template, used on node form.
+ */
+#}
+{% if type != 'document' %}
+    <div class="cke-placeholder-temp cke-placeholder-image-wrap">
+        <img src="{{ thumbnail_url }}" draggable="false">
+    </div>
+    <h6>{{ title:truncate(70) }}</h6>
+
+    {% if editlink is not empty %}
+        <button class="btn btn-success cke-placeholder-edit" data-target="{{ editlink }} "> {{ 'Edit'|trans }}</button>
+    {% endif %}
+{% else %}
+    <h6><a class="cke-placeholder-draggable" href="{{ file_url }}"> {{ title:truncate(70) }}</a></h6>
+{% endif%}

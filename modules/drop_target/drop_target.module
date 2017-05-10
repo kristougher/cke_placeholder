@@ -1,4 +1,5 @@
 <?php
+
 /**
  * @file
  * A drag and drop widget for entity reference-, file- and image fields.
@@ -10,6 +11,20 @@
 function drop_target_help() {
 
 }
+
+/**
+ * Implements hook_cke_placeholder_field_widget_alter().
+ */
+function drop_target_cke_placeholder_field_widget_alter(&$cke_placeholder_widgets, Drupal\Core\Field\WidgetBase $widget) {
+  // Check if class widget is Drop target one.
+  if (get_class($widget) == 'Drupal\drop_target\Plugin\Field\FieldWidget\DropTargetWidget') {
+      $cke_placeholder_widgets['DropTargetWidget'] = [
+        'cke_placeholder_library' => array_keys($widget->getSetting('types')),
+        'upload_file' => array_keys($widget->getSetting('types'))
+      ];
+     }
+}
+
 /**
  * Implements hook_field_widget_form().
  */
@@ -41,7 +56,7 @@ function drop_target_field_widget_form(&$form, &$form_state, $field, $instance, 
   elseif (isset($form_state['values'][$field['field_name']][$langcode][$delta]['fid'])) {
     $fid = $form_state['values'][$field['field_name']][$langcode][$delta]['fid'];
   }
-  dpm($fid);
+
   if (!empty($fid)) {
     $entity = file_load($fid);
     $title = $entity->title;
