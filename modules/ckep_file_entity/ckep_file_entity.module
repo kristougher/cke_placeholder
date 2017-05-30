@@ -9,35 +9,12 @@ require_once 'ckep_file_entity.library.inc';
 /**
  * Implements hook_help().
  */
+/*
 function ckep_file_entity_help($route_name, RouteMatchInterface $route_match) {
  if  ($route_name == 'help.page.ckep_file_entity') {
       return t('<p>The CKEditor Placeholder File Entity module insert file entities in CKEditor fields.</p>');
   }
-}
-/**
- * Implements hook_cke_placeholder_library()
- */
-function ckep_file_entity_cke_placeholder_library() {
-  $tabs = array();
-
-  $tabs['ckep_file_entity'] = array(
-    'pane_title' => t('Media library'),
-    'list_callback' => 'ckep_file_entity_library_source_list_result',
-    'list_wrapper_id' => 'ckep_file_entity-media-list',
-    'form' => 'ckep_file_entity_library_form',
-    'file' => 'ckep_file_entity.library.inc',
-    'module' => 'ckep_file_entity',
-  );
-
-  $tabs['upload_file'] = array(
-    'form' => 'ckep_file_entity_upload_form',
-    'pane_title' => t('Upload file'),
-    'file' => 'ckep_file_entity.library.inc',
-    'module' => 'ckep_file_entity',
-  );
-
-  return $tabs;
-}
+}*/
 
 /**
  * Implements hook_cke_placeholder_tags().
@@ -123,50 +100,7 @@ function ckep_file_entity_source_list($form, &$form_state, $type = NULL) {
  * @return array
  *   Renderable array for the media library.
  */
-function ckep_file_entity_library_source_list_result(&$form_state, $search = NULL, $type = NULL, $count = 8, $offset = 0) {
 
-  $files = _ckep_file_entity_media_db_query($offset, $count, $search, $type);
-
-  if (count($files) > $count) {
-    $form_state['cke_placeholder_library']['show_next_button'] = TRUE;
-    end($files);
-    $file_key = key($files);
-    unset($files[$file_key]);
-  }
-
-  foreach ($files as $file) {
-    $file_caption = !empty($file->field_caption) ? $file->field_caption['und'][0]['value'] : '';
-    $file_title = !empty($file->field_file_image_title_text)
-      ? $file->field_file_image_title_text['und'][0]['value'] : $file->filename;
-
-    if ($file->type == 'image') {
-      $thumb = image_style_url('thumbnail', $file->uri);
-    }
-    else {
-      $thumb = drupal_get_path('module', 'ckep_file_entity') . '/assets/document.png';
-    }
-    $theme_vars = array(
-      'title' => $file_title,
-      'thumbnail_url' => $thumb,
-      'file_url' => file_create_url($file->uri),
-      'caption' => $file_caption,
-      'editlink' => sprintf('file/%d/edit', $file->fid),
-      'type' => $file->type,
-    );
-    $file_markup = theme('ckep_file_entity_library_item', $theme_vars);
-
-    $result[] = array(
-      'data' => array(
-        'id' => $file->fid,
-        'type' => $file->type,
-        'caption' => $file_caption,
-      ),
-      'markup' => $file_markup,
-    );
-  }
-
-  return $result;
-}
 
 function _ckep_file_entity_media_db_query($offset = 0, $count = 8, $search_term = NULL, $type = NULL) {
   module_load_include('inc', 'file_entity', 'file_entity.admin');
@@ -198,64 +132,6 @@ function _ckep_file_entity_media_db_query($offset = 0, $count = 8, $search_term 
   return $files;
 }
 
-/**
- * Process callback for embed widget tag.
- *
- * @ingroup callbacks
- */
-function ckep_file_entity_widget_process($media_values, $filter) {
-  $file = file_load($media_values['id']);
-  $output = '';
-
-  if ($file->type == 'image') {
-    $variables = array(
-      'style_name' => 'large',
-      'path' => $file->uri,
-    );
-
-    $picture_tag = theme('image_style', $variables);
-
-    $output = theme('ckep_file_entity_inline_image', array(
-      'picture_tag' => $picture_tag,
-      'caption' => urldecode($media_values['caption']),
-    ));
-  }
-  else {
-    $output = render(file_view($file, 'teaser'));
-  }
-
-  return $output;
-}
-
-/**
- * Process callback for embed widget tag.
- *
- * @ingroup callbacks
- */
-function ckep_file_entity_widget_preview_process($media_values, $filter) {
-  // Loads the file.
-  $output = '';
-  $file = file_load(intval($media_values['id']));
-
-  $image_url = image_style_url('thumbnail', $file->uri);
-
-  $wrap_style = 'full';
-
-  if (!empty($media_values['alignment']) && ($media_values['alignment'] != 'full')) {
-    $wrap_style = trim($media_values['alignment']);
-  }
-
-  if ($file->type == 'image') {
-    $output = theme('ckep_file_entity_inline_image', array(
-      'picture_tag' => theme('image', array('path' => $image_url)),
-      'alignment_class' => 'body-text__picture--',
-    ));
-  }
-  else {
-    $output = render(file_view($file, 'teaser'));
-  }
-  return $output;
-}
 
 
 /**

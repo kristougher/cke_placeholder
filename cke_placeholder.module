@@ -13,8 +13,7 @@ use Drupal\Core\Form\FormStateInterface;
  * Implements hook_help().
  */
 function cke_placeholder_help($route_name, RouteMatchInterface $route_match) {
-  switch ($route_name) {
-    case 'help.page.cke_placeholder':
+  if ($route_name == 'help.page.cke_placeholder') {
       return t('<p>The CKE placeholder filter handling placeholders for embedded widgets in CKEditor.</p>');
   }
 }

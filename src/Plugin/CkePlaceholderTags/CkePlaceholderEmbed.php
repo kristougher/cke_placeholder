@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\cke_file_entity\Plugin\CkePlaceholderTags;
+namespace Drupal\cke_placeholder\Plugin\CkePlaceholderTags;
 
 use Drupal\cke_placeholder\CkePlaceholderTagsBase;
 
