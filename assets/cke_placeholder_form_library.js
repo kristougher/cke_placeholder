@@ -6,6 +6,7 @@
    */
   Drupal.behaviors.cke_placeholder_drop_target = {
     attach: function(context, settings) {
+
       context = $(context);
       var drop_target = context.find(".field-widget-droptarget");
 
@@ -63,9 +64,11 @@
       // Add UI events on the library tabs.
       // Library pane. Tabs and close buttons.
       var library = $('.cke-placeholder-library-form-wrap');
-
+console.log(library);
       library.once('library_tabs', function(){
+
         $('.cke-placeholder-library-close').on('click', function() {
+            console.log(123, library);
           $('.cke-active-tab-input').val('');
           library.removeClass('open');
           $('.cke-placeholder-tab.active').removeClass('active');
@@ -79,6 +82,7 @@
         });
 
         $('.cke-placeholder-tab').on('click', function(){
+            console.log($(this), 132);
           if (!library.hasClass('open')) {
             library.addClass('open');
           }

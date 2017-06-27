@@ -4,7 +4,7 @@ namespace Drupal\cke_placeholder;
 
 use Drupal\Component\Plugin\PluginBase;
 
-abstract class CkePlaceholderLibrary extends PluginBase implements CkePlaceholderLibraryInterface {
+abstract class CkePlaceholderLibraryBase extends PluginBase implements CkePlaceholderLibraryInterface {
 
   /**
    * {@inheritdoc}

@@ -5,9 +5,9 @@
  * Media library plugin for the CKE Placeholder media pane.
  */
 
-namespace Drupal\cke_placeholder\CkePlaceholderMediaLibrary;
+namespace Drupal\cke_placeholder\Plugin\CkePlaceholderLibrary;
 
-use Drupal\cke_placeholder\CkePlaceholderLibrary;
+use Drupal\cke_placeholder\CkePlaceholderLibraryBase;
 
 /**
  * Class CkePlaceholderMediaLibrary
@@ -18,10 +18,10 @@ use Drupal\cke_placeholder\CkePlaceholderLibrary;
  *   description=@Translation("Media Library for CKE Placeholder pane"),
  *   pane_title=@Translation("Media"),
  *   list_wrapper_id="media-library",
- *   module="cke_placeholder
+ *   module="cke_placeholder"
  * )
  */
-class CkePlaceholderMediaLibrary extends CkePlaceholderLibrary {
+class CkePlaceholderMediaLibrary extends CkePlaceholderLibraryBase {
 
   /**
    * {@inheritdoc}
@@ -37,6 +37,8 @@ class CkePlaceholderMediaLibrary extends CkePlaceholderLibrary {
    * {@inheritdoc}
    */
   public function getList() {
-    return 'jkdhfgkjsfgks';
+    return [
+      '#markup' => 'jkdhfgkjsfgks',
+    ];
   }
 }

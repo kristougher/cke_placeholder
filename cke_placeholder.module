@@ -8,6 +8,7 @@
 
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\cke_placeholder\CkePlaceholderLibraryInterface;
 
 /**
  * Implements hook_help().
@@ -122,6 +123,8 @@ function cke_placeholder_tags($name = NULL) {
 
 /**
  * Implements hook_form_alter().
+ *
+ * Suffix the library to the entity form.
  */
 function cke_placeholder_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
   $library_add = drupal_static('cke_placeholder_field_widget_form_alter');
@@ -136,19 +139,25 @@ function cke_placeholder_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
   }
   if ((isset($library_add) && !isset($library_added) && ($form_id != 'cke_placeholder_library_form'))
     || isset($cke_tabs_widget)) {
-    $form['attached']['library'][] =  'system/ui.dialog';
-     // Invoke all the hook calls.
-    $library_panes = Drupal::moduleHandler()->invokeAll('cke_placeholder_library');
-    // Add options to b altered.
-    Drupal::moduleHandler()->alter('cke_placeholder_library', $library_panes);
-    // Get the tab panes content (and the respective forms).
-    $cke_tabs = _cke_placeholder_get_tab_panes($form_state, $library_add, $library_panes);
-    $form['#suffix'] = render($cke_tabs) . 'Her er text';
 
+    // Get the library pane plugins and apply them.
+    $plugin = \Drupal::service('plugin.manager.cke_placeholder_library');
+    $definitions = $plugin->getDefinitions();
+    // Get the tab panes content (and the respective forms).
+    $library_form = _cke_placeholder_get_tab_panes($form_state, $library_add, $definitions);
+    foreach ($definitions as $id => $definition) {
+      $pluginInstance = $plugin->createInstance($id);
+      _cke_placeholder_add_pane($library_form, $definition, $pluginInstance);
+    }
+
+    $form['#suffix'] = render($library_form);
+
+    $form['attached']['library'][] =  'system/ui.dialog';
     $form['attached']['library'][] = 'cke_placeholder/cke_placeholder_forms';
     $library_added = TRUE;
   }
 }
+
 
 function _cke_placeholder_get_dynamic_library() {
   return array(
@@ -163,9 +172,9 @@ function _cke_placeholder_get_dynamic_library() {
 }
 
 /**
- * Callback for media library pane.
+ * Create the foundation renderable array for the library pane.
  */
-function _cke_placeholder_get_tab_panes(&$form_state, $library_add, $library_panes) {
+function _cke_placeholder_get_tab_panes() {
 
   $panes['panes_wrapper'] = array(
     '#type' => 'container',
@@ -188,59 +197,39 @@ function _cke_placeholder_get_tab_panes(&$form_state, $library_add, $library_pan
     ),
   );
 
-  // Iterate through registered panes.
-  foreach ($library_panes as $pane_name => $pane) {
-    if (!empty($pane['file'])) {
-      $filename_parts = explode('.', $pane['file']);
-      module_load_include(array_pop($filename_parts), $pane['module'], implode('.', $filename_parts));
-    }
-    $pane_id = $pane_name . '-wrap';
-
-    $panes['panes_wrapper']['tab_' . $pane_name] = array(
-      '#type' => 'html_tag',
-      '#tag' => 'div',
-      '#value' => t($pane['pane_title']),
-      '#attributes' => array(
-        'class' => 'cke-placeholder-tab ' . $pane_name . '-tab',
-        'data-target' => $pane_id,
-      ),
-    );
-
-    // Add form element.
-    $pane_content = '';
-    if (isset($pane['form'])
-      && function_exists($pane['form'])) {
-      $form_settings = isset($library_add[$pane_name]) ? $library_add[$pane_name] : array();
-      $form = drupal_get_form($pane['form'], $form_settings);
-
-      $pane_content .= render($form);
-    }
-
-    if (isset($pane['list_callback'])) {
-      $pane_list_id = $pane_name . '-list';
-      if (!empty($pane['list_wrapper_id'])) {
-        $pane_list_id = $pane['list_wrapper_id'];
-      }
-      $list_items = call_user_func($pane['list_callback'], $form_state, $form_settings);
-      $pane_content .= theme('cke_placeholder_library_item', array(
-        'cke_placeholder_tag' => $pane_name,
-        'items' => $list_items,
-        'wrapper_id' => $pane_list_id,
-      ));
-    }
-
-    $panes['panes_wrapper'][$pane_name] = array(
-      '#type' => 'html_tag',
-      '#tag' => 'div',
-      '#value' => $pane_content,
-      '#attributes' => array(
-        'class' => 'cke-placeholder-fieldset-wrapper',
-        'id' => $pane_id,
-      ),
-    );
-  }
-
   return $panes;
+}
+
+/**
+ * Add a library pane from a plugin definition.
+ *
+ * @param $form
+ *   The form array that creates the
+ * @param $definition
+ * @param \Drupal\cke_placeholder\CkePlaceholderLibraryInterface $instance
+ */
+function _cke_placeholder_add_pane(&$form, $definition, CkePlaceholderLibraryInterface $instance) {
+  $pane_name = $definition['id'];
+  $pane_id = $pane_name . '-wrap';
+
+  $form['panes_wrapper']['tab_' . $pane_name] = array(
+    '#type' => 'html_tag',
+    '#tag' => 'div',
+    '#value' => t($definition['pane_title']->render()),
+    '#attributes' => array(
+      'class' => 'cke-placeholder-tab ' . $pane_name . '-tab',
+      'data-target' => $pane_id,
+    ),
+  );
+
+  $form['panes_wrapper'][$pane_name] = [
+    '#type' => 'container',
+    '#attributes' => [
+      'class' => 'cke-placeholder-fieldset-wrapper',
+      'id' => $pane_id,
+    ],
+    'form_item' => $instance->buildForm(),
+  ];
 }
 
 /**
