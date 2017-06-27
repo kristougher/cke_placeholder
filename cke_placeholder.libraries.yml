@@ -6,7 +6,7 @@ cke_placeholder_forms:
     assets/cke_placeholder_object.js: {}
   css:
     theme:
-    assets/cke_placeholder_form.css': {}
+        assets/cke_placeholder_form.css: {}
   dependencies:
     - core/jquery
     - core/drupalSettings

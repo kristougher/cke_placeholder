@@ -143,7 +143,9 @@ function cke_placeholder_form_alter(&$form, \Drupal\Core\Form\FormStateInterface
     Drupal::moduleHandler()->alter('cke_placeholder_library', $library_panes);
     // Get the tab panes content (and the respective forms).
     $cke_tabs = _cke_placeholder_get_tab_panes($form_state, $library_add, $library_panes);
-    $form['#suffix'] = render($cke_tabs);
+    $form['#suffix'] = render($cke_tabs) . 'Her er text';
+
+    $form['attached']['library'][] = 'cke_placeholder/cke_placeholder_forms';
     $library_added = TRUE;
   }
 }
