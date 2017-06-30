@@ -4,7 +4,7 @@
  * Apply filters from CKE placeholders plugins.
  * This step has been injected to only call setData once when loading the editor.
  */
-alert('pony-hest')
+
 (function ($, Drupal, CKEDITOR) {
 
     "use strict";
@@ -12,7 +12,9 @@ alert('pony-hest')
      * Add methods for converting placeholders on instanceready and destroy.
      */
     CKEDITOR.plugins.add('cke_placeholder', {
-        init: function (editor) {
+        init: function (editor) {}
+    });
+    /*
             CKEDITOR.config.extraAllowedContent += 'div(cke-placeholder-hidden,cke-placeholder)';
             CKEDITOR.dialog.add('cke_placeholder', this.path + 'dialogs/cke_placeholder.js');
             Drupal.settings.cke_placeholder.editors.push(editor.name);
@@ -62,6 +64,7 @@ alert('pony-hest')
              * @returns {object}
              *   CKEditor widget settings object.
              */
+    /*
             var widget = function (name, customPlugin) {
                 var settings = {
                     upcast: function (element) {
@@ -166,5 +169,5 @@ alert('pony-hest')
             }
         }
     });
-
-})
+*/
+});

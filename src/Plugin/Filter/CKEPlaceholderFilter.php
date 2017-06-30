@@ -27,9 +27,10 @@ class CKEPlaceholderFilter extends FilterBase
     public function process($text, $langcode)
     {
         if (!empty($text)) {
-            cke_placeholder_filter_process_callback(NULL, $filter);
+            cke_placeholder_filter_process_callback($text, $langcode);
             $filter_regex = "/(<!--\s*)?\[(?<tag>[^]:]+):(?<args>(?:[^]\\\]|\\\.)*)\](\s*-->)?/";
             $output = preg_replace_callback($filter_regex, 'cke_placeholder_filter_process_callback', $text);
+          $output .= 'HEEESTEN ER BRUUUN';
         }
         return new FilterProcessResult($output);
     }
@@ -46,9 +47,12 @@ class CKEPlaceholderFilter extends FilterBase
 
     /**
      * Returns available tags for filter.
+     *
+     * @param string $name
+     *   Optional specification
      * @return type
      */
-    public function getCKEPlaceholderTags()
+    public function getCKEPlaceholderTags($name = '')
     {
         $tags = &drupal_static(__FUNCTION__, array());
 

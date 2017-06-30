@@ -333,6 +333,5 @@ function _cke_placeholder_form_js_include(&$element, &$form_state) { var_dump("D
 
   $library_add = array_merge($cke_placeholder_widgets[$instance['widget']['type']], $library_add);
 
-
   return $element;
 }
