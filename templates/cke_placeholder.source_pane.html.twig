@@ -1,0 +1,26 @@
+{# 
+/**
+ * @file
+ * Media library template.
+ */
+#}
+
+<div class="cke-placeholder-lists">
+   {% for item in source_items %}
+    <div draggable="true"
+       class="cke-placeholder-draggable {{ item.type }}"
+       ondragstart="ckePlaceholder.dragStart(event, 'cke_placeholder_file')"
+       data-type="{{ item.type }}"
+       data-caption="{{ item.caption }}"
+       data-id="{{ item.id}} ">
+    <div class="cke-placeholder-image-wrap">
+      <img src="{{ item.preview }}" draggable="false"/>
+    </div>
+    <h6> {{ item.title }}</h6>
+    <button class="btn btn-success cke-placeholder-edit" data-target="/file/{{ item.id }}/edit?destination=cke-placeholder/update-done/{{ item.id }}">
+      {{ 'Edit'|t }}
+    </button>
+     {{ item.dimensions }}
+  </div>
+  {% endfor %}
+</div>

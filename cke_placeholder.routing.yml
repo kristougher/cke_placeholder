@@ -1,0 +1,34 @@
+cke_placeholder.widget_preview:
+  path: '/cke-placeholder/widget-preview/{plugin}'
+  defaults:
+    _title: 'Ajax CKEditor preview'
+    _controller: '\Drupal\cke_placeholder\Controller\DefaultController::cke_placeholder_widget_preview'
+  requirements:
+    _permission: 'access content'
+cke_placeholder.source_list:
+  path: /cke-placeholder/source-pane
+  defaults:
+    _title: 'Ajax CKEditor preview'
+  requirements:
+    _permission: 'access content'
+cke_placeholder.media_status_update:
+  path: '/cke-placeholder/media-status-update/{file}/{new_status}'
+  defaults:
+    _title: 'Media status update'
+    _controller: '\Drupal\cke_placeholder\Controller\DefaultController::cke_placeholder_media_status_update'
+  requirements:
+    _permission: 'view private files'
+cke_placeholder.update_done:
+  path: '/cke-placeholder/update-done/{file}'
+  defaults:
+    _title: 'Update parent window from dialog iframe'
+    _controller: '\Drupal\cke_placeholder\Controller\DefaultController::cke_placeholder_update_done'
+  requirements:
+    _permission: 'view private files'
+cke_placeholder.cke_placeholder_settings:
+  path: /admin/config/content/cke-placeholder-settings
+  defaults:
+    _title: 'Administer media file settings'
+    _form: \Drupal\cke_placeholder\Form\CkePlaceholderSettingsForm
+  requirements:
+    _permission: 'administer site configuration'

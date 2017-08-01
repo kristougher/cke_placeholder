@@ -1,0 +1,14 @@
+services:
+  plugin.manager.cke_placeholder.plugin:
+    class: Drupal\cke_placeholder\CKEPlaceholder
+    parent: default_plugin_manager
+  plugin.manager.cke_link_text.plugin:
+    class: Drupal\cke_placeholder\CKELinkText
+    parent: default_plugin_manager
+  plugin.manager.cke_placeholder_library:
+    class: Drupal\cke_placeholder\CkePlaceholderLibraryPluginManager
+    parent: default_plugin_manager
+  plugin.manager.cke_placeholder_tags:
+    class: Drupal\cke_placeholder\CkePlaceholderTagsPluginManager
+    parent: default_plugin_manager  
+  

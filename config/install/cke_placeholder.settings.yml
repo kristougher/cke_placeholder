@@ -1,0 +1,3 @@
+cke_placeholder_allowed_extensions: 'png jpg gif pdf'
+cke_placeholder_filter_regex: ''
+cke_placeholder_items_per_page: 8

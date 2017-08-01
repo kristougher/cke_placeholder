@@ -1,0 +1,343 @@
+<?php
+
+/**
+ * @file
+ * CKEditor placeholder filter.
+ */
+
+
+use Drupal\Core\Routing\RouteMatchInterface;
+use Drupal\Core\Form\FormStateInterface;
+use Drupal\cke_placeholder\CkePlaceholderLibraryInterface;
+
+/**
+ * Implements hook_help().
+ */
+function cke_placeholder_help($route_name, RouteMatchInterface $route_match) {
+  if ($route_name == 'help.page.cke_placeholder') {
+      return t('<p>The CKE placeholder filter handling placeholders for embedded widgets in CKEditor.</p>');
+  }
+}
+
+
+/**
+ * Implements hook_theme().
+ */
+function cke_placeholder_theme() {
+  $themes = [
+    'cke_placeholder_source_pane' => [
+      'variables' => [
+        'source_items' => [],
+        'offset' => NULL,
+      'display_pager' => NULL,
+      ],
+      'template' => 'templates/cke_placeholder.source_pane',
+    ],
+    'cke_placeholder_library_item' => [
+      'variables' => [
+         'cke_placeholder_tag' => NULL,
+         'wrapper_id' => NULL,
+         'items' => array(),
+      'no_wrapper' => NULL,
+      ],
+     'template' => 'templates/cke_placeholder.library_item',
+    ],
+    'cke_placeholder_update_done' => [
+      'variables' => [
+        'fid' => NULL,
+        'title' => NULL,
+        'caption' => NULL,
+      ],
+      'template' => 'templates/cke_placeholder.update_done',
+    ]
+  ];
+
+  return $themes;
+}
+
+/**
+ * Preg_replace callback for the filter.
+ *
+ * @param array $match
+ *   Regex matches.
+ */
+function cke_placeholder_filter_process_callback($match, $set_filter = NULL) {
+  static $currently_processing = array();
+  static $filter = NULL;
+
+  if (!empty($set_filter)) {
+    $filter = $set_filter;
+    return NULL;
+  }
+
+  if (empty($match['tag']) || !($tag = cke_placeholder_tags($match['tag']))) {
+    return NULL;
+  }
+  if (isset($tag['css']) && count($tag['css'])) {
+    foreach ($tag['css'] as $css) {
+      drupal_add_css($css);
+    }
+  }
+
+  if (isset($tag['js']) && count($tag['js'])) {
+    foreach ($tag['js'] as $js) {
+      drupal_add_js($js);
+    }
+  }
+
+  if (function_exists($tag['process'])) {
+    $function = $tag['process'];
+
+    $args = drupal_json_decode(str_replace("\\]", "]", $match['args']));
+    $lock_key = substr($function . ':' . md5($match['args']), 0, 100);
+    // Make sure that we don't process elements recursively.
+    if (isset($currently_processing[$lock_key])) {
+      return $match[0];
+    }
+    else {
+      $currently_processing[$lock_key] = TRUE;
+      $output = $function($args, $filter);
+      unset($currently_processing[$lock_key]);
+      return $output;
+    }
+  }
+
+  return $match[0];
+}
+
+/**
+ * Returns available tags for filter.
+ */
+function cke_placeholder_tags($name = NULL) {
+  $tags = &drupal_static(__FUNCTION__, array());
+
+  if (!$tags) {
+    $tags = Drupal::moduleHandler()->invokeAll('cke_placeholder_tags');
+    Drupal::moduleHandler()->alter('cke_placeholder_tags', $tags);
+  }
+  if (!empty($name)) {
+    return isset($tags[$name]) ? $tags[$name] : NULL;
+  }
+
+  return $tags;
+}
+
+/**
+ * Implements hook_form_alter().
+ *
+ * Suffix the library to the entity form.
+ */
+function cke_placeholder_form_alter(&$form, \Drupal\Core\Form\FormStateInterface $form_state, $form_id) {
+  $library_add = drupal_static('cke_placeholder_field_widget_form_alter');
+  $library_added = &drupal_static(__FUNCTION__);
+  drupal_set_message(drupal_get_path('module', 'cke_placeholder') . '/js/plugins/cke_placeholder/plugin.js');
+
+  if (!isset($library_add)) {
+    foreach ($form as $element) {
+      if (is_array($element) && isset($element['#cke_tabs'])) {
+        $library_add = _cke_placeholder_get_dynamic_library();
+        $cke_tabs_widget = TRUE;
+      }
+    }
+  }
+  if ((isset($library_add) && !isset($library_added) && ($form_id != 'cke_placeholder_library_form'))
+    || isset($cke_tabs_widget)) {
+drupal_set_message('active');
+    // Get the library pane plugins and apply them.
+    $plugin = \Drupal::service('plugin.manager.cke_placeholder_library');
+    $definitions = $plugin->getDefinitions();
+    // Get the tab panes content (and the respective forms).
+    $library_form = _cke_placeholder_get_tab_panes($form_state, $library_add, $definitions);
+    foreach ($definitions as $id => $definition) {
+      $pluginInstance = $plugin->createInstance($id);
+      _cke_placeholder_add_pane($library_form, $definition, $pluginInstance);
+    }
+
+    $form['#suffix'] = render($library_form);
+
+    $form['attached']['library'][] = 'system/ui.dialog';
+    $form['attached']['library'][] = 'cke_placeholder/cke_placeholder_forms';
+    $library_added = TRUE;
+  }
+  else {
+    drupal_set_message('not active');
+  }
+}
+
+
+function _cke_placeholder_get_dynamic_library() {
+  return array(
+    'cke_placeholder_library' => array(
+      'image' => 'image',
+    ),
+    'cke_placeholder_document_library' => array(
+      'document' => 'document',
+    ),
+    'upload_file' => array(TRUE),
+  );
+}
+
+/**
+ * Create the foundation renderable array for the library pane.
+ */
+function _cke_placeholder_get_tab_panes() {
+
+  $panes['panes_wrapper'] = array(
+    '#type' => 'container',
+    '#attributes' => array('class' => 'cke-placeholder-library-form-wrap'),
+  );
+
+  $panes['panes_wrapper']['closing_button'] = array(
+    '#type' => 'html_tag',
+    '#tag' => 'div',
+    '#value' => t('Close'),
+    '#attributes' => array(
+      'class' => 'cke-placeholder-library-close'
+    ),
+  );
+
+  $panes['panes_wrapper']['cke_active_tab'] = array(
+    '#type' => 'hidden',
+    '#attributes' => array(
+      'class' => array('cke-active-tab-input'),
+    ),
+  );
+
+  return $panes;
+}
+
+/**
+ * Add a library pane from a plugin definition.
+ *
+ * @param $form
+ *   The form array that creates the
+ * @param $definition
+ * @param \Drupal\cke_placeholder\CkePlaceholderLibraryInterface $instance
+ */
+function _cke_placeholder_add_pane(&$form, $definition, CkePlaceholderLibraryInterface $instance) {
+  $pane_name = $definition['id'];
+  $pane_id = $pane_name . '-wrap';
+
+  $form['panes_wrapper']['tab_' . $pane_name] = array(
+    '#type' => 'html_tag',
+    '#tag' => 'div',
+    '#value' => t($definition['pane_title']->render()),
+    '#attributes' => array(
+      'class' => 'cke-placeholder-tab ' . $pane_name . '-tab',
+      'data-target' => $pane_id,
+    ),
+  );
+
+  $form['panes_wrapper'][$pane_name] = [
+    '#type' => 'container',
+    '#attributes' => [
+      'class' => 'cke-placeholder-fieldset-wrapper',
+      'id' => $pane_id,
+    ],
+    'form_item' => $instance->buildForm(),
+  ];
+}
+
+/**
+ * Implements hook_field_widget_form_alter().
+ */
+function cke_placeholder_field_widget_form_alter(&$element, \Drupal\Core\Form\FormStateInterface $form_state, $context) {
+
+  $library_add = &drupal_static(__FUNCTION__);
+  switch (get_class($context['widget'])) {
+    case 'Drupal\text\Plugin\Field\FieldWidget\TextareaWithSummaryWidget':
+      $cke_placeholder_widgets['TextareaWithSummaryWidget'] = [
+        'cke_placeholder_library' => [
+        // 'image' and 'document' below are file types as provided by
+        // file_entity. They are used directly in querying file_managed table.
+          'image' => 'image',
+        ],
+        'cke_placeholder_document_library' => [
+        // This is file type as provided by file_entity.
+          'document' => 'document',
+        ],
+        'upload_file' => [TRUE],
+      ];
+      break;
+    case 'Drupal\text\Plugin\Field\FieldWidget\TextareaWidget':
+      $cke_placeholder_widgets['TextareaWidget'] = [
+        'cke_placeholder_library' => [
+          'image' => 'image',
+        ],
+        'cke_placeholder_document_library' => [
+          'document' => 'document',
+        ],
+        'upload_file' => [TRUE],
+      ];
+      break;
+    default :
+      $cke_placeholder_widgets = [];
+  }
+  // Add option other modules, which implements a new widget to USE CKE placeholder functionality.
+  Drupal::moduleHandler()->alter('cke_placeholder_field_widget', $cke_placeholder_widgets, $context['widget']);
+
+  if (!empty($cke_placeholder_widgets)) {
+    if (!isset($library_add)) {
+      $library_add = [];
+      $path = drupal_get_path('module', 'cke_placeholder');
+      $element['#attached']['library'][] = 'cke_placeholder/cke_placeholder_forms';
+      $element['#attached']['drupalSettings'] = [
+          'cke_placeholder' => [
+            'filter' => cke_placeholder_tags(),
+            'editors' => [],
+          ],
+      ];
+    }
+    $library_add = array_merge($cke_placeholder_widgets, $library_add);
+   }
+ }
+
+
+
+/**
+ * Load required JS.
+ */
+function _cke_placeholder_form_js_include(&$element, &$form_state) { var_dump("DASDAS");
+  $library_add = &drupal_static('cke_placeholder_field_widget_form_alter');
+
+  if (!isset($library_add)) {
+    $library_add = array();
+  }
+
+  if (empty($element['#field_name'])) {
+    return;
+  }
+
+//  $instance = field_info_instance($element['#entity_type'], $element['#field_name'], $element['#bundle']);
+
+  $cke_placeholder_widgets = array(
+    'text_textarea_with_summary' => array(
+      'cke_placeholder_library' => array(
+        'image' => 'image',
+      ),
+      'upload_file' => array(TRUE),
+    ),
+    'text_textarea' => array(
+      'cke_placeholder_library' => array(
+        'image' => 'image',
+      ),
+      'upload_file' => array(TRUE),
+    ),
+  );
+
+  if ($instance['widget']['type'] == 'droptarget') {
+    $cke_placeholder_widgets['droptarget'] = array(
+      'cke_placeholder_library' => $instance['widget']['settings']['types'],
+      'upload_file' => $instance['widget']['settings']['types'],
+    );
+  }
+
+  if (empty($instance['widget']['type'])
+    || empty($cke_placeholder_widgets[$instance['widget']['type']])) {
+    return;
+  }
+
+  $library_add = array_merge($cke_placeholder_widgets[$instance['widget']['type']], $library_add);
+
+  return $element;
+}

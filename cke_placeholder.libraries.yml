@@ -1,0 +1,18 @@
+cke_placeholder_forms:
+  version: 1.x
+  js:
+    js/cke_placeholder_form.js: {}
+    assets/cke_placeholder_form_library.js: {}
+    assets/cke_placeholder_object.js: {}
+  css:
+    theme:
+        assets/cke_placeholder_form.css: {}
+  dependencies:
+    - core/jquery
+    - core/jquery.once
+    - core/drupalSettings
+
+editor_plugin:
+  version: 1.x
+  js:
+    js/cke_placeholder_form.js: {}
