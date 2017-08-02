@@ -3,3 +3,10 @@ description = Insert file entities in CKEditor fields.
 core = 7.x
 package = CKEditor
 dependencies[] = cke_placeholder
+
+
+; Information added by drush on 2017-08-02
+version = "5c1ee935ed39a5036d8ff08d2362918fac48f486"
+project = "cke_placeholder"
+datestamp = "1501659003"
+

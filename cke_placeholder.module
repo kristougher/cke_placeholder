@@ -96,6 +96,42 @@ function cke_placeholder_ckeditor_plugin() {
 }
 
 /**
+ * Implementation of hook_wysiwyg_plugin().
+ */
+function cke_placeholder_wysiwyg_plugin($editor, $version) {
+  if ($editor == 'ckeditor') {
+    // return array('cke_placeholder' => drupal_get_path('module', 'cke_placeholder') .'/cke_placeholder/');
+    return array(
+      'cke_placeholder' => array(
+        'path' => drupal_get_path('module', 'cke_placeholder') .'/cke_placeholder',
+        'load' => TRUE,
+        'extensions' => array('cke_placeholder' => t('CKE Placeholder')),
+      ),
+      'widget' => array(
+        'path' => 'sites/filmcentralen/libraries/ckeditor/plugins/widget',
+        'load' => TRUE,
+        'extensions' => array('widget' => t('Widget')),
+      ),
+      'lineutils' => array(
+        'path' => 'sites/filmcentralen/libraries/ckeditor/plugins/lineutils',
+        'load' => TRUE,
+        'extensions' => array('lineutils' => t('LineUtils')),
+      ),
+      'widgetselection' => array(
+        'path' => 'sites/filmcentralen/libraries/ckeditor/plugins/widgetselection',
+        'load' => TRUE,
+        'extensions' => array('widgetselection' => t('Widget Selection')),
+      ),
+    );
+
+  }
+}
+
+/**
+projects[cke_placeholder][download][url] = http://git.drupal.org/project/cke_placeholder.git
+projects[cke_placeholder][download][revision] = 5c1ee935ed39a5036d8ff08d2362918fac48f486
+projects[cke_placeholder][subdir] = contrib
+projects[cke_placeholder][download][type] = git
  * Implements hook_filter_info().
  */
 function cke_placeholder_filter_info() {
