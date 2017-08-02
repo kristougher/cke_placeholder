@@ -154,7 +154,8 @@ var ckePlaceholder = {
     if (null === matches) {
       return null;
     }
-    var data = JSON.parse(matches[0].match(/\{(([^\]\\]|\\.)+)}/g)[0].replace(/\\"/g, '"'));
+    var json_raw = matches[0].match(/\{(([^\]\\]|\\.)+)}/g)[0].replace(/\\"/g, '"').replace(/(\\)?&quot;/g, '"');
+    var data = JSON.parse(json_raw);
     return data;
   },
   /**
