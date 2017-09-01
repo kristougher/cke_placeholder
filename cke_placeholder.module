@@ -5,10 +5,10 @@
  * CKEditor placeholder filter.
  */
 
-namespace Drupal\cke_placeholder;
-
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Form\FormStateInterface;
+use Drupal\cke_placeholder\CkePlaceholderLibraryInterface;
+use Drupal\cke_placeholder\Form\CkePlaceholderLibraryForm;
 
 /**
  * Implements hook_help().
@@ -30,7 +30,7 @@ function cke_placeholder_theme() {
         'offset' => NULL,
         'display_pager' => NULL,
       ],
-      'template' => 'templates/cke_placeholder.source_pane',
+      'template' => 'cke_placeholder.source_pane',
     ],
     'cke_placeholder_library_item' => [
       'variables' => [
@@ -39,7 +39,7 @@ function cke_placeholder_theme() {
         'items' => array(),
         'no_wrapper' => NULL,
       ],
-      'template' => 'templates/cke_placeholder.library_item',
+      'template' => 'cke_placeholder.library_item',
     ],
     'cke_placeholder_update_done' => [
       'variables' => [
@@ -47,7 +47,7 @@ function cke_placeholder_theme() {
         'title' => NULL,
         'caption' => NULL,
       ],
-      'template' => 'templates/cke_placeholder.update_done',
+      'template' => 'cke_placeholder.update_done',
     ],
   ];
 
@@ -130,7 +130,6 @@ function cke_placeholder_form_alter(&$form, FormStateInterface $form_state, $for
 
   $library_add = drupal_static('cke_placeholder_field_widget_form_alter');
   $library_added = &drupal_static(__FUNCTION__);
-  drupal_set_message(drupal_get_path('module', 'cke_placeholder') . '/js/plugins/cke_placeholder/plugin.js');
 
   if (!isset($library_add)) {
     foreach ($form as $element) {
@@ -143,25 +142,22 @@ function cke_placeholder_form_alter(&$form, FormStateInterface $form_state, $for
   if ((isset($library_add) && !isset($library_added) && ($form_id != 'cke_placeholder_library_form'))
     || isset($cke_tabs_widget)) {
 
-    // Get the library pane plugins and apply them.
+    $library_form = new CkePlaceholderLibraryForm();
+    $library_form->setupBase();
     $plugin = \Drupal::service('plugin.manager.cke_placeholder_library');
     $definitions = $plugin->getDefinitions();
 
-    // Get the tab panes content (and the respective forms).
-    $library_form = _cke_placeholder_get_tab_panes($form_state, $library_add, $definitions);
-
     foreach ($definitions as $id => $definition) {
       $pluginInstance = $plugin->createInstance($id);
-      _cke_placeholder_add_pane($library_form, $definition, $pluginInstance);
+      $library_form->addPane($definition, $pluginInstance);
     }
-    $form['#suffix'] = render($library_form);
+
+    $lib_form = array();
+    $form['cke_placeholder_library'] = $library_form->buildForm($form, $form_state);
 
     $form['#attached']['library'][] = 'system/ui.dialog';
     $form['#attached']['library'][] = 'cke_placeholder/cke_placeholder_forms';
     $library_added = TRUE;
-  }
-  else {
-    drupal_set_message('not active');
   }
 }
 
@@ -178,74 +174,6 @@ function _cke_placeholder_get_dynamic_library() {
   );
 }
 */
-
-/**
- * Create the foundation renderable array for the library pane.
- */
-function _cke_placeholder_get_tab_panes() {
-
-  $panes['panes_wrapper'] = array(
-    '#type' => 'container',
-    '#attributes' => array('class' => 'cke-placeholder-library-form-wrap'),
-  );
-
-  $panes['panes_wrapper']['tabs'] = array(
-    '#type' => 'container',
-    '#attributes' => array('class' => 'cke-placeholder-library-tabs'),
-  );
-
-  $panes['panes_wrapper']['closing_button'] = array(
-    '#type' => 'html_tag',
-    '#tag' => 'div',
-    '#value' => t('Close'),
-    '#attributes' => array(
-      'class' => 'cke-placeholder-library-close',
-    ),
-  );
-
-  $panes['panes_wrapper']['cke_active_tab'] = array(
-    '#type' => 'hidden',
-    '#attributes' => array(
-      'class' => array('cke-active-tab-input'),
-    ),
-  );
-
-  return $panes;
-}
-
-/**
- * Add a library pane from a plugin definition.
- *
- * @param array $form
- *   The form array that provides the media library.
- * @param array $definition
- *   Properties from the CkePlaceholderLibrary plugin.
- * @param CkePlaceholderLibraryInterface $instance
- *   The plugin instance.
- */
-function _cke_placeholder_add_pane(array &$form, array $definition, CkePlaceholderLibraryInterface $instance) {
-  $pane_name = $definition['id'];
-  $pane_id = $pane_name . '-wrap';
-
-  $form['panes_wrapper']['tabs']['tab_' . $pane_name] = array(
-    '#type' => 'html_tag',
-    '#tag' => 'div',
-    '#value' => $definition['pane_title']->render(),
-    '#attributes' => array(
-      'class' => 'cke-placeholder-tab ' . $pane_name . '-tab',
-      'data-target' => $pane_id,
-    ),
-  );
-
-  $form['panes_wrapper'][$pane_name] = [
-    '#type' => 'container',
-    '#attributes' => [
-      'class' => 'cke-placeholder-fieldset-wrapper',
-      'id' => $pane_id,
-    ],
-    'form_item' => $instance->buildForm(),
-  ];
-}
 
 /**
  * Implements hook_field_widget_form_alter().

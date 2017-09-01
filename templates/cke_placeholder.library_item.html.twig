@@ -1,4 +1,4 @@
-{# 
+{#
 /**
  * @file
  * Library item template, used on node form.
@@ -12,8 +12,8 @@
           draggable="true"
           class="cke-placeholder-draggable"
           ondragstart="ckePlaceholder.dragStart(event, '{{ cke_placeholder_tag }}')"
-          {% for  value in item.data %}
-            data-{{ value.key }}={{ value.key }}
+          {% for key, value in item.data %}
+            data-{{ key }}="{{ value }}"
 
           {% endfor %}
           >
@@ -23,5 +23,3 @@
 {% if no_wrapper is not empty %}
 </div>
 {% endif %}
-
-

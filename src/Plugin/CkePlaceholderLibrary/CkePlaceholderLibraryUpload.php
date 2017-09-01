@@ -8,6 +8,7 @@
 namespace Drupal\cke_placeholder\Plugin\CkePlaceholderLibrary;
 
 use Drupal\cke_placeholder\CkePlaceholderLibraryBase;
+use Drupal\cke_placeholder\CkePlaceholderLibraryInterface;
 
 /**
  * Class CkePlaceholderMediaLibrary
@@ -15,21 +16,33 @@ use Drupal\cke_placeholder\CkePlaceholderLibraryBase;
  *
  * @CkePlaceholderLibrary(
  *   id="ckeplaceholder_library_upload",
- *   description=@Translation("Media Library for CKE Placeholder pane"),
- *   pane_title=@Translation("Media"),
- *   list_wrapper_id="media-library",
+ *   description=@Translation("Upload pane for CKE Placeholder library."),
+ *   pane_title=@Translation("Upload"),
+ *   list_wrapper_id="ckeplaceholder-upload",
  *   module="cke_placeholder"
  * )
  */
-class CkePlaceholderLibraryUpload extends CkePlaceholderLibraryBase {
+class CkePlaceholderLibraryUpload extends CkePlaceholderLibraryBase implements CkePlaceholderLibraryInterface {
 
   /**
    * {@inheritdoc}
    */
   public function buildForm() {
     return [
-      '#type' => 'managed_file',
-      '#title' => t('Upload file'),
+      'images' => [
+        '#type' => 'managed_file',
+        '#title' => t('Upload file'),
+        '#default_value' => NULL,
+        '#upload_location' => 'public://cke_placeholder_upload/',
+        '#multiple' => TRUE,
+        '#upload_validators' => [
+          'file_validate_extensions' => ['png gif jpg jpeg pdf'],
+          'file_validate_size' => [25600000],
+        ],
+      ],
+      'list' => [
+        '#markup' => '<div id="library-upload">HER</div>',
+      ],
     ];
   }
 

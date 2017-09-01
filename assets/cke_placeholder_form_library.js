@@ -65,9 +65,7 @@
       // Library pane. Tabs and close buttons.
       var library = $('.cke-placeholder-library-form-wrap');
 
-    //  library.once('library-tabs', function () {
-console.log(123, library)
-        $('.cke-placeholder-library-close').one('click', function () {
+        $('.cke-placeholder-library-close').on('click', function () {
           $('.cke-active-tab-input').val('');
           library.removeClass('open');
           $('.cke-placeholder-tab.active').removeClass('active');
@@ -80,8 +78,7 @@ console.log(123, library)
           }
         });
 
-        $('.cke-placeholder-tab').one('click', function () {
-            console.log($(this), 132);
+        $('.cke-placeholder-tab').on('click', function () {
           if (!library.hasClass('open')) {
             library.addClass('open');
           }
@@ -101,7 +98,7 @@ console.log(123, library)
           $('.cke-active-tab-input').val(selected_set);
           library.find('#' + selected_set).addClass('active');
         });
-      // });
+
       context.find('.cke-placeholder-library-upload [name="cke_placeholder_file_upload_new_file_upload_button"]').on('mousedown', function () {
         $('.cke-placeholder-library-upload [name="submit_upload"]').show();
       });
