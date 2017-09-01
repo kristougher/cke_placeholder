@@ -5,7 +5,7 @@
    * Behaviors for the media field to drop items on.
    */
   Drupal.behaviors.cke_placeholder_drop_target = {
-    attach: function(context, settings) {
+    attach: function (context, settings) {
 
       context = $(context);
       var drop_target = context.find(".field-widget-droptarget");
@@ -13,10 +13,10 @@
       // Hide deleted items and set event on trashcan.
       $('.cke-placeholder-hidden-target').closest('tr').hide();
 
-      $('.cke-placeholder-droptarget-trash').on('click', function() {
+      $('.cke-placeholder-droptarget-trash').on('click', function () {
         // Empty the fid value in order for Drupal field handler do the rest.
         $(this).siblings('.cke-placeholder-item').val(0);
-        $(this).parent().find('.file-image').hide(function(){ $(this).remove();});
+        $(this).parent().find('.file-image').hide(function () { $(this).remove();});
         $(this).parent().siblings().hide();
         $(this).hide();
       });
@@ -24,10 +24,10 @@
       drop_target.find('input.field-add-more-submit').parent().hide();
 
       // Drop functions.
-      drop_target.each(function() {
-        $(this).once('droptarget', function() {
+      drop_target.each(function () {
+        $(this).once('droptarget', function () {
 
-          $(this).on('drop', function(ev) {
+          $(this).on('drop', function (ev) {
             ev.preventDefault();
             // Get the string for the suggestion-field and check if there is an
             // empty textfield.
@@ -51,10 +51,10 @@
           });
 
           // UX only functions.
-          drop_target.on('dragover', function(ev) {
+          drop_target.on('dragover', function (ev) {
             ev.preventDefault();
             $(this).css('opacity', 0.5);
-          }).on('dragleave', function(ev) {
+          }).on('dragleave', function (ev) {
             ev.preventDefault();
             $(this).css('opacity', 1);
           });
@@ -64,24 +64,23 @@
       // Add UI events on the library tabs.
       // Library pane. Tabs and close buttons.
       var library = $('.cke-placeholder-library-form-wrap');
-console.log(library);
-      library.once('library_tabs', function(){
 
-        $('.cke-placeholder-library-close').on('click', function() {
-            console.log(123, library);
+    //  library.once('library-tabs', function () {
+console.log(123, library)
+        $('.cke-placeholder-library-close').one('click', function () {
           $('.cke-active-tab-input').val('');
           library.removeClass('open');
           $('.cke-placeholder-tab.active').removeClass('active');
         });
 
         var search_field = $('.cke-placeholder-freetext-search');
-        search_field.on('keydown', function(evt) {
+        search_field.one('keydown', function (evt) {
           if (evt.keyCode == 13) {
             $('.cke-placeholder-library-submit-search').trigger('mousedown');
           }
         });
 
-        $('.cke-placeholder-tab').on('click', function(){
+        $('.cke-placeholder-tab').one('click', function () {
             console.log($(this), 132);
           if (!library.hasClass('open')) {
             library.addClass('open');
@@ -102,8 +101,8 @@ console.log(library);
           $('.cke-active-tab-input').val(selected_set);
           library.find('#' + selected_set).addClass('active');
         });
-      });
-      context.find('.cke-placeholder-library-upload [name="cke_placeholder_file_upload_new_file_upload_button"]').on('mousedown', function() {
+      // });
+      context.find('.cke-placeholder-library-upload [name="cke_placeholder_file_upload_new_file_upload_button"]').on('mousedown', function () {
         $('.cke-placeholder-library-upload [name="submit_upload"]').show();
       });
     }

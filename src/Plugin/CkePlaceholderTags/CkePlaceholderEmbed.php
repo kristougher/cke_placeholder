@@ -40,14 +40,14 @@ class CkePlaceholderEmbed extends CkePlaceholderTagsBase {
    * {@inheritdoc}
    */
   public function process() {
-
+    return '<h1>Ponyen har flotte farver</h1>';
   }
 
   /**
    * {@inheritdoc}
    */
   public function preview_process() {
-
+    return '<h1>Ponyen har flotte farver  -især den brune</h1>';
   }
 
 }

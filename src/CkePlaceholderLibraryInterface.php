@@ -11,34 +11,40 @@ interface CkePlaceholderLibraryInterface {
    * Provide a description of plugin.
    *
    * @return string
-   *   A string description of the CkePlaceholderLibrary.
+   *   A string description of the CkePlaceholderLibrary pane.
    */
   public function description();
 
   /**
-   * Provide a pane title of plugin
+   * Provide a pane title of plugin.
    *
    * @return string
+   *   The Label to display on the tab for the pane.
    */
   public function paneTitle();
 
   /**
    * Provide a list wrapper id.
    *
-   * @return string.
+   * @return string
+   *   The id for the markup for use with AJAX functions.
    */
   public function listWrapperId();
+
   /**
    * Provide the form for pane tabs.
    *
-   * @return float
-   *   The number of calories per serving.
+   * @return array
+   *   A form array to display on the library pane.
    */
   public function buildForm();
 
   /**
-   * Place an order for a CkePlaceholderLibrary.
-   * @return array()
+   * Return the list of items to drag from CkePlaceholderLibrary.
+   *
+   * @return array
+   *   An array of draggable list elements.
    */
   public function getList();
+
 }

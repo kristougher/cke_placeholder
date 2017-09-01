@@ -1,7 +1,7 @@
 cke_placeholder_forms:
   version: 1.x
   js:
-    js/cke_placeholder_form.js: {}
+    assets/cke_placeholder_form.js: {}
     assets/cke_placeholder_form_library.js: {}
     assets/cke_placeholder_object.js: {}
   css:

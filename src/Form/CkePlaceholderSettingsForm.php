@@ -49,14 +49,14 @@ class CkePlaceholderSettingsForm extends ConfigFormBase {
       '#collapsible' => TRUE,
       '#collapsed' => TRUE,
     ];
-
+/*
     $form['cke_placeholder_advanced']['cke_placeholder_filter_regex'] = [
       '#type' => 'textfield',
       '#title' => t('CKE placeholder filter regex'),
       '#default_value' => \Drupal::config('cke_placeholder.settings')->get('cke_placeholder_filter_regex'),
       '#maxlength' => NULL,
     ];
-
+*/
     for ($i = 1; $i <= 20; $i++) {
       $default_items[$i] = $i;
     }
@@ -76,7 +76,7 @@ class CkePlaceholderSettingsForm extends ConfigFormBase {
    */
   public function validateForm(array &$form, FormStateInterface $form_state) {
 
-    if (!empty($form_state->getValue('cke_placeholder_allowed_extensions'))) {
+    if (!$form_state->getValue('cke_placeholder_allowed_extensions')) {
       $extensions = preg_replace('/([, ]+\.?)/', ' ', trim(strtolower($form_state->getValue('cke_placeholder_allowed_extensions'))));
       $extensions = array_filter(explode(' ', $extensions));
       $extensions = implode(' ', array_unique($extensions));

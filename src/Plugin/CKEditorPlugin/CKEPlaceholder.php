@@ -25,7 +25,7 @@ use Symfony\Component\DependencyInjection\ContainerInterface;
  *   module = "cke_placeholder"
  * )
  */
-class CKEPlaceholder extends PluginBase implements CKEditorPluginContextualInterface {
+class CKEPlaceholder extends CKEditorPluginBase implements CKEditorPluginContextualInterface {
 
   /**
    * {@inheritdoc}
@@ -41,7 +41,7 @@ class CKEPlaceholder extends PluginBase implements CKEditorPluginContextualInter
     return FALSE;
   }
 
-  public function isEnabled(\Drupal\editor\Entity\Editor $editor) {
+  public function isEnabled(Editor $editor) {
     $format = $editor->getFilterFormat();
     return $format->filters('cke_placeholder_filter')->status;
 
@@ -62,9 +62,9 @@ class CKEPlaceholder extends PluginBase implements CKEditorPluginContextualInter
     );
     $extraAllowedContent = sprintf(' div(cke-placeholder-hidden,cke-placeholder,%)', implode(',', $ckep_tags));
 
-    return []; [
+    return [
       'ckePlaceholderTags' => implode(',', $ckep_tags),
-      'allowedContent' => $settings['allowedContent'] . $extraAllowedContent,
+      'allowedContent' => $extraAllowedContent,
       'contentCss' => '',
     ];
   }
@@ -85,20 +85,21 @@ class CKEPlaceholder extends PluginBase implements CKEditorPluginContextualInter
 
   /**
    * {@inheritdoc}
-   *//*
+   */
   public function settingsForm(array $form, FormStateInterface $form_state, Editor $editor) {
     $settings = $editor->getSettings();
 
     return $form;
-  }*/
+  }
 
   /**
    * {@inheritdoc}
-   *//*
+   */
   public function getButtons() {
     return [
-      'TextBox' => array(
+      'CkePlaceholder' => array(
         'label' => t('Text box'),
+        'image' => drupal_get_path('module', 'linkit') . '/js/plugins/linkit/linkit.png',
         'image_alternative' => [
           '#type' => 'inline_template',
           '#template' => '<a href="http://a.bc">her</a>',
@@ -109,6 +110,4 @@ class CKEPlaceholder extends PluginBase implements CKEditorPluginContextualInter
       ),
     ];
   }
-*/
-
 }

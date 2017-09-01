@@ -114,14 +114,16 @@ class CrepFileEntity extends CkePlaceholderLibraryBase {
       '#value' => t('Search'),
     );
 
-    // $latest_media = ckep_file_entity_library_source_list_result($form, $params, 'file');
-    // $form['cke_placeholder_library']['results'] = array(
-    //   '#type' => 'container',
-    //   '#attributes' => array(
-    //     'id' => array('cke-placeholder-library-' . $bundle),
-    //   ),
-    //   '#tree' => FALSE,
-    // );
+    $latest_media = [
+      '#markup' => '<h1>Her er en hest</h1>h1>',
+    ]; //ckep_file_entity_library_source_list_result($form, $params, 'file');
+     $form['cke_placeholder_library']['results'] = array(
+       '#type' => 'container',
+       '#attributes' => array(
+         'id' => array('cke-placeholder-library-' . $bundle),
+       ),
+       '#tree' => FALSE,
+     );
 
     if ($offset > 0) {
       $form['cke_placeholder_library']['results']['pager_prev'] = array(

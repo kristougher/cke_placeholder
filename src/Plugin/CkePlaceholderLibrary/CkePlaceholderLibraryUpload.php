@@ -14,22 +14,22 @@ use Drupal\cke_placeholder\CkePlaceholderLibraryBase;
  * @package Drupal\cke_placeholder\CkePlaceholderMediaLibrary
  *
  * @CkePlaceholderLibrary(
- *   id="ckeplaceholder_medialibrary",
+ *   id="ckeplaceholder_library_upload",
  *   description=@Translation("Media Library for CKE Placeholder pane"),
  *   pane_title=@Translation("Media"),
  *   list_wrapper_id="media-library",
  *   module="cke_placeholder"
  * )
  */
-class CkePlaceholderMediaLibrary extends CkePlaceholderLibraryBase {
+class CkePlaceholderLibraryUpload extends CkePlaceholderLibraryBase {
 
   /**
    * {@inheritdoc}
    */
   public function buildForm() {
     return [
-      '#type' => 'textfield',
-      '#title' => t('Pony'),
+      '#type' => 'managed_file',
+      '#title' => t('Upload file'),
     ];
   }
 

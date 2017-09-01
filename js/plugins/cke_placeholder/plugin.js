@@ -5,29 +5,29 @@
  * This step has been injected to only call setData once when loading the editor.
  */
 
-(function ($, Drupal, CKEDITOR) {
+(function ($, Drupal, drupalSettings, CKEDITOR) {
 
-    "use strict";
     /**
-     * Add methods for converting placeholders on instanceready and destroy.
+     * Add methods for converting placeholders on instance ready and destroy.
      */
     CKEDITOR.plugins.add('cke_placeholder', {
-        init: function (editor) {}
-    });
-    /*
+        icons: 'cke_placeholder',
+        init: function (editor) {
             CKEDITOR.config.extraAllowedContent += 'div(cke-placeholder-hidden,cke-placeholder)';
             CKEDITOR.dialog.add('cke_placeholder', this.path + 'dialogs/cke_placeholder.js');
-            Drupal.settings.cke_placeholder.editors.push(editor.name);
+            drupalSettings.cke_placeholder.editors.push(editor.name);
             var path = this.path;
 
             // Fire the placeholder replacement and attach the stylesheet when ready.
             editor.on('instanceReady', function (evt) {
+                alert(1234);
                 evt.editor.addContentsCss(path + '../css/cke_placeholder.editor.css');
                 ckePlaceholder.readPlaceholders(editor);
             });
 
             // Fire the placeholder replacement and attach the stylesheet when ready.
             editor.on('paste', function (evt) {
+                console.log(13154);
                 evt.data.dataValue = ckePlaceholder.replacePlaceholderInText(evt.data.dataValue);
             });
 
@@ -59,12 +59,11 @@
              * @param {string} name
              *   Machine name for the plugin.
              * @param {object} customPlugin
-             *   Registered settings from Drupal.settings.cke_placeholder.filter
+             *   Registered settings from drupalSettings.cke_placeholder.filter
              *
              * @returns {object}
              *   CKEditor widget settings object.
              */
-    /*
             var widget = function (name, customPlugin) {
                 var settings = {
                     upcast: function (element) {
@@ -104,7 +103,7 @@
 
                             // Enable editables.
                             if (customPlugin.editables) {
-                                var editables = Drupal.settings.cke_placeholder.filter[plugin].editables;
+                                var editables = drupalSettings.cke_placeholder.filter[plugin].editables;
                                 for (var className in editables) {
                                     var editable = new CKEDITOR.htmlParser.element('div', {
                                         class: className + ' cke-placeholder-editable-' + plugin,
@@ -121,7 +120,7 @@
                         var plugin = element.attributes['data-cke_plugin'];
                         var data = ckePlaceholder.getJsonFromPlaceholder(element.getHtml());
 
-                        if (Drupal.settings.cke_placeholder.filter[plugin].editables && element.children) {
+                        if (drupalSettings.cke_placeholder.filter[plugin].editables && element.children) {
                             var key, value;
 
                             // @todo Only clean certain tags or allow options.
@@ -134,8 +133,8 @@
                             }
                         }
 
-                        if (Drupal.settings.cke_placeholder.filter[plugin].downcast) {
-                            data = Drupal.settings.cke_placeholder.filter[plugin].downcast(element.children, data);
+                        if (drupalSettings.cke_placeholder.filter[plugin].downcast) {
+                            data = drupalSettings.cke_placeholder.filter[plugin].downcast(element.children, data);
                             if (typeof data !== 'object') {
                                 data = {};
                             }
@@ -164,10 +163,9 @@
                 return settings;
             };
 
-            for (var name in Drupal.settings.cke_placeholder.filter) {
-                editor.widgets.add('cke_placeholder_' + name, widget(name, Drupal.settings.cke_placeholder.filter[name]));
+            for (var name in drupalSettings.cke_placeholder.filter) {
+                editor.widgets.add('cke_placeholder_' + name, widget(name, drupalSettings.cke_placeholder.filter[name]));
             }
         }
     });
-*/
-});
+})(jQuery, Drupal, drupalSettings, CKEDITOR);

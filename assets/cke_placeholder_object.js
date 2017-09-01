@@ -1,5 +1,6 @@
 /**
  * Wrapper for general functions regarding CKE Placeholder.
+ * <!--[test:{"gnu":12}]-->
  */
 var ckePlaceholder = {
   placeholderId: 0,
