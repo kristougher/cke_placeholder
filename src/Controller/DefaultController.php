@@ -8,6 +8,8 @@
 namespace Drupal\cke_placeholder\Controller;
 
 use Drupal\Core\Controller\ControllerBase;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\JsonResponse;
 
 /**
  * Default controller for the cke_placeholder module.
@@ -27,17 +29,18 @@ class DefaultController extends ControllerBase {
    * @param string $plugin
    *   Name of the cke_placeholder tag/plugin.
    */
-  public function cke_placeholder_widget_preview($plugin) {
-    $args = \Drupal\Component\Utility\UrlHelper::filterQueryParameters();
-    $tag = cke_placeholder_tags($plugin);
-    $process_function = empty($tag['preview_process']) ? $tag['process'] : $tag['preview_process'];
-    $output = $process_function($args, NULL);
+  public function cke_placeholder_widget_preview(Request $request, $plugin) {
+    $args = \Drupal\Component\Utility\UrlHelper::filterQueryParameters($request->query->all());
+    $pluginManager = \Drupal::service('plugin.manager.cke_placeholder_tags');
 
-    return array(['#markup' => $output]);
+    $pluginClass = $pluginManager->createInstance($plugin);
+    $output = $pluginClass->previewProcess($args);
+
+    return new JsonResponse(['markup' => $output]);
   }
 
   public function source_pane() {
-    
+
   }
 
   /**
@@ -70,7 +73,7 @@ class DefaultController extends ControllerBase {
       'fid' => $file->fid,
       'title' => $file->filename
     ];
-  * 
+  *
   */
 
     return $output;

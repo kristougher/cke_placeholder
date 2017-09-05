@@ -20,14 +20,12 @@
 
             // Fire the placeholder replacement and attach the stylesheet when ready.
             editor.on('instanceReady', function (evt) {
-                alert(1234);
-                evt.editor.addContentsCss(path + '../css/cke_placeholder.editor.css');
+                evt.editor.addContentsCss(path + 'css/cke_placeholder.editor.css');
                 ckePlaceholder.readPlaceholders(editor);
             });
 
             // Fire the placeholder replacement and attach the stylesheet when ready.
             editor.on('paste', function (evt) {
-                console.log(13154);
                 evt.data.dataValue = ckePlaceholder.replacePlaceholderInText(evt.data.dataValue);
             });
 
@@ -35,7 +33,7 @@
             editor.on('mode', function (evt) {
                 var editor = evt.editor;
                 if (editor.mode == 'wysiwyg') {
-                    editor.addContentsCss(path + '../css/cke_placeholder.editor.css');
+                    editor.addContentsCss(path + 'css/cke_placeholder.editor.css');
                     ckePlaceholder.readPlaceholders(editor);
                 }
             });
@@ -68,7 +66,7 @@
                 var settings = {
                     upcast: function (element) {
                         var className = name.replace(/_/g, '-');
-
+                        console.log([className, element, name, customPlugin], 1);
                         if (element.hasClass(name) || element.hasClass(className)) {
                             var plugin = element.attributes['data-cke_plugin'];
                             if (plugin != name) {
@@ -78,7 +76,8 @@
                             var data;
                             try {
                                 data = ckePlaceholder.getJsonFromPlaceholder(element.getHtml());
-                            } catch (err) {
+                            }
+                            catch (err) {
                                 alert('The data for the widget could not be interpreted.');
                                 data = null;
                             }

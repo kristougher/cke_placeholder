@@ -1,13 +1,13 @@
 <?php
 
-namespace Drupal\cke_file_entity\Plugin\CkePlaceholderTags;
+namespace Drupal\ckep_file_entity\Plugin\CkePlaceholderTags;
 
 use Drupal\cke_placeholder\CkePlaceholderTagsBase;
 
 /**
  * Provides a CkeFileEntity plugin.
  *
- * CkePlaceholderTags(
+ * @CkePlaceholderTags(
  *   id = "cke_file_entity",
  *   description = @Translation("Cke File Entity for CKE Placeholder Tags."),
  *   editables = {
@@ -60,17 +60,17 @@ class CkeFileEntity extends CkePlaceholderTagsBase {
   /**
    * {@inheritdoc}
    */
-  public function preview_process($media_values, $filter) {
-// Loads the file.
+  public function previewProcess($args) {
+    // Loads the file.
     $output = '';
-    $file = file_load(intval($media_values['id']));
+    $file = file_load(intval($args['id']));
 
     $image_url = image_style_url('thumbnail', $file->uri);
 
     $wrap_style = 'full';
 
-    if (!empty($media_values['alignment']) && ($media_values['alignment'] != 'full')) {
-      $wrap_style = trim($media_values['alignment']);
+    if (!empty($args['alignment']) && ($args['alignment'] != 'full')) {
+      $wrap_style = trim($args['alignment']);
     }
 
     if ($file->type == 'image') {

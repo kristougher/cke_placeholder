@@ -7,12 +7,12 @@ use Drupal\cke_placeholder\CkePlaceholderTagsBase;
 /**
  * Provides a CkePlaceholderEmbed plugin.
  *
- * CkePlaceholderTags(
+ * @CkePlaceholderTags(
  *   id = "cke_placeholder_embed",
  *   description = @Translation("Cke Placeholder Embed for CKE Placeholder Tags."),
  *   editables = {
  *     "caption" = {
- *       "label" = @Translation('Caption'),
+ *       "label" = @Translation("Caption"),
  *       "allowed_content" = "strong em i",
  *     }
  *   },
@@ -39,14 +39,14 @@ class CkePlaceholderEmbed extends CkePlaceholderTagsBase {
   /**
    * {@inheritdoc}
    */
-  public function process() {
+  public function process($args) {
     return '<h1>Ponyen har flotte farver</h1>';
   }
 
   /**
    * {@inheritdoc}
    */
-  public function preview_process() {
+  public function previewProcess($args) {
     return '<h1>Ponyen har flotte farver  -især den brune</h1>';
   }
 

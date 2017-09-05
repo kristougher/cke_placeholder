@@ -19,27 +19,27 @@ function ckep_file_entity_help($route_name, RouteMatchInterface $route_match) {
 /**
  * Implements hook_cke_placeholder_tags().
  */
-function ckep_file_entity_cke_placeholder_tags() {
-  $filters = array();
-
-  $filters['ckep_file_entity'] = array(
-    'editables' => array(
-      'caption' => array(
-        'label' => t('Caption'),
-        'allowed_content' => 'strong em i',
-      ),
-    ),
-    'key' => array('id', 'type'),
-    'set_alignment' => array(
-      'left' => t('Left'),
-      'right' => t('Right'),
-      'full' => t('Full'),
-    ),
-    'process' => 'ckep_file_entity_widget_process',
-    'preview_process' => 'ckep_file_entity_widget_preview_process',
-  );
-  return $filters;
-}
+// function ckep_file_entity_cke_placeholder_tags() {
+//   $filters = array();
+//
+//   $filters['ckep_file_entity'] = array(
+//     'editables' => array(
+//       'caption' => array(
+//         'label' => t('Caption'),
+//         'allowed_content' => 'strong em i',
+//       ),
+//     ),
+//     'key' => array('id', 'type'),
+//     'set_alignment' => array(
+//       'left' => t('Left'),
+//       'right' => t('Right'),
+//       'full' => t('Full'),
+//     ),
+//     'process' => 'ckep_file_entity_widget_process',
+//     'preview_process' => 'ckep_file_entity_widget_preview_process',
+//   );
+//   return $filters;
+// }
 
 /**
  * Implements hook_theme()
@@ -55,7 +55,7 @@ function ckep_file_entity_theme() {
       ],
       'template' => 'templates/ckep_file_entity.inline_image',
     ],
-   'ckep_file_entity_library_item' => [
+    'ckep_file_entity_library_item' => [
       'variables' => [
         'title' => NULL,
         'thumbnail_url' => NULL,
@@ -65,8 +65,8 @@ function ckep_file_entity_theme() {
         'type' => NULL,
       ],
       'template' => 'templates/ckep_file_entity.library_item',
-    ]
- ];
+    ],
+  ];
 
   return $themes;
 }
@@ -100,8 +100,6 @@ function ckep_file_entity_source_list($form, &$form_state, $type = NULL) {
  * @return array
  *   Renderable array for the media library.
  */
-
-
 function _ckep_file_entity_media_db_query($offset = 0, $count = 8, $search_term = NULL, $type = NULL) {
   module_load_include('inc', 'file_entity', 'file_entity.admin');
 
@@ -265,4 +263,3 @@ function ckep_file_entity_library_upload_callback($form, &$form_state) {
 
   return render($form);
 }
-

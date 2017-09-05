@@ -35,11 +35,15 @@ class CkePlaceholderMediaLibrary extends CkePlaceholderLibraryBase implements Ck
       ],
       'list' => [
         '#theme' => 'cke_placeholder_library_item',
-        '#cke_placeholder_tag' => 'cke_placeholder_embed',
+        '#cke_placeholder_tag' => 'ckep_file_entity',
         '#wrapper_id' => 'cke_placeholder_embed',
         '#items' => [
           [
-            'data' => ['id' => 1, 'caption' => 'hej med dig'],
+            'data' => [
+              'id' => 1,
+              'caption' => 'hej med dig',
+              'type' => 'image',
+            ],
             'markup' => 'Træk denne',
           ],
         ],

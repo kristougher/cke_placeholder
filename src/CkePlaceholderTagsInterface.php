@@ -48,15 +48,24 @@ interface CkePlaceholderTagsInterface {
 
   /**
    * Render widget in frontend (in text filter).
+   *
+   * @param array $args
+   *   The values from the placeholder.
+   *
    * @return string
    *  Markup of the widget.
    */
-  public function process();
+  public function process($args);
 
   /**
    * Render for the preview. If it is not override, use the process one.
+   *
+   * @param array $args
+   *   The values from the placeholder.
+   *
    * @return string
    *  Markup of the widget.
    */
-  public function preview_process();
+  public function previewProcess($args);
+
 }

@@ -4,7 +4,7 @@ namespace Drupal\cke_placeholder;
 
 use Drupal\Component\Plugin\PluginBase;
 
-abstract class CkePlaceholderTags extends PluginBase implements CkePlaceholderTagsInterface {
+abstract class CkePlaceholderTagsBase extends PluginBase implements CkePlaceholderTagsInterface {
 
   /**
    * {@inheritdoc}
@@ -57,12 +57,12 @@ abstract class CkePlaceholderTags extends PluginBase implements CkePlaceholderTa
   /**
    * {@inheritdoc}
    */
-  abstract public function process();
+  abstract public function process($args);
 
   /**
    * {@inheritdoc}
    */
-  public function preview_process() {
+  public function previewProcess($args) {
     $this->process();
   }
 

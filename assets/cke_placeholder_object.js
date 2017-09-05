@@ -84,7 +84,8 @@ var ckePlaceholder = {
    * @returns {boolean}
    *   The markup is populated inside the function.
    */
-  getContent: function(plugin, data, editorName, storageKey, reset) {
+  getContent: function (plugin, data, editorName, storageKey, reset) {
+    console.log([plugin, data, editorName, storageKey, reset]);
     var path = 'cke-placeholder/widget-preview/' + plugin;
     var self = this;
 
@@ -97,11 +98,12 @@ var ckePlaceholder = {
     var preview;
 
     if (this.checkForContent.indexOf(storageKey) < 0) {
-      // Add lock to prevent from fetching to times simultaneously.
+      // Add lock to prevent from fetching two times simultaneously.
       ckePlaceholder.checkForContent.push(storageKey);
-      var jqXHR = jQuery.getJSON(Drupal.settings.basePath + path, data);
+      console.log(drupalSettings.path);
+      var jqXHR = jQuery.getJSON('/' + drupalSettings.path.baseUrl + path, data);
 
-      jqXHR.promise().done(function(response) {
+      jqXHR.promise().done(function (response) {
         element = CKEDITOR.instances[editorName].document.findOne('[data-cke_placeholder_id="' + storageKey + '"]');
 
         if (typeof element !== undefined && element != null) {
@@ -185,8 +187,10 @@ var ckePlaceholder = {
    * @returns {string}
    *   HTML markup for a single widget.
    */
-  getWidgetMarkup: function(plugin, data) {
-    var storageKey = this.storageKey(plugin, JSON.parse(data));
+  getWidgetMarkup: function (plugin, data) {
+    console.log(plugin, data);
+    data = JSON.parse(data);
+    var storageKey = this.storageKey(plugin, data);
     var className = plugin.replace(/_/g, '-');
     var markup = '<div class="cke-placeholder ' + className + ' ' + plugin + '" data-cke_plugin="' + plugin + '" data-cke_placeholder_id="' + storageKey + '">' +
       '<div class="cke-placeholder-hidden">' +
@@ -211,12 +215,12 @@ var ckePlaceholder = {
   },
 
   /**
-   * Read a single placeholder
+   * Read a single placeholder.
    */
-  replacePlaceholderInText: function(placeholder) {
-    newText = placeholder.replace(ckePlaceholder.regex, function(match, commentStart, commentWrap, comment, plugin, json) {
+  replacePlaceholderInText: function (placeholder) {
+    newText = placeholder.replace(ckePlaceholder.regex, function (match, commentStart, commentWrap, comment, plugin, json) {
       // Only handle registered plugins.
-      if (Drupal.settings.cke_placeholder.filter[plugin]) {
+      if (drupalSettings.cke_placeholder.filter[plugin]) {
         var markup = ckePlaceholder.getWidgetMarkup(plugin, json);
         return markup;
       }
@@ -234,16 +238,17 @@ var ckePlaceholder = {
    * @param {string} string
    *   The editor content.
    */
-  removeWrapper: function(string) {
+  removeWrapper: function (string) {
     return string.replace(
       this.wrapperRegex,
       function (match, plugin, comment) {
-        if (Drupal.settings.cke_placeholder.filter[plugin]) {
+        if (drupalSettings.cke_placeholder.filter[plugin]) {
           return "<!--" + comment + "-->";
         }
         return match;
       });
   },
+
   /**
    * Get a unique identifier for a widget.
    *
@@ -251,12 +256,14 @@ var ckePlaceholder = {
    *
    * @param plugin
    * @param data
+   *
    * @returns {string}
    */
-  storageKey: function(plugin, data) {
-    var storageKey = plugin;
-    var key_keys = jQuery.unique(Drupal.settings.cke_placeholder.filter[plugin].key);
+  storageKey: function (plugin, data) {
 
+    var storageKey = plugin;
+    var key_keys = jQuery.unique(drupalSettings.cke_placeholder.filter[plugin].key);
+    console.log(key_keys, data)
     for (var i in key_keys) {
       storageKey += '_' + encodeURI(data[key_keys[i]].replace(' ', ''));
     }
@@ -278,18 +285,18 @@ var ckePlaceholder = {
    *   A jQuery object. The function may be called inside the editor where
    *   jQuery is not available.
    */
-  updateStatus: function(fileID, newStatus, link, jQ) {
+  updateStatus: function (fileID, newStatus, link, jQ) {
     if (!jQ) {
       jQ = jQuery;
     }
     var self = this;
-    jQ.get('/cke-placeholder/media-status-update/' + fileID + '/' + newStatus, function() {
+    jQ.get('/cke-placeholder/media-status-update/' + fileID + '/' + newStatus, function () {
       var element = link.parentNode.parentNode;
       var storageKey = element.attributes.getNamedItem('data-cke_placeholder_id').value;
       var plugin = element.attributes.getNamedItem('data-cke_plugin').value;
       var dataRaw = element.childNodes.item(0).innerHTML;
       var data = self.getJsonFromPlaceholder(dataRaw);
-
+console.log(data);
       self.getContent(plugin, data, 'edit-body-und-0-value', storageKey, true);
     });
 
@@ -300,10 +307,13 @@ var ckePlaceholder = {
    *
    * @param elem
    *   Placeholder dragable DOM element.
-   * @cke_placeholder_tag
+   * @param cke_placeholder_tag
    *   Placeholder tag name.
+   *
+   * @return string
+   *   The placeholder for the tag.
    */
-  getPlaceholderCode: function(elem, cke_placeholder_tag) {
+  getPlaceholderCode: function (elem, cke_placeholder_tag) {
     var placeholder_values = {};
 
     for (var i in elem.attributes) {
