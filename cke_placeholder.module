@@ -157,7 +157,18 @@ function cke_placeholder_form_alter(&$form, FormStateInterface $form_state, $for
 
     $form['#attached']['library'][] = 'system/ui.dialog';
     $form['#attached']['library'][] = 'cke_placeholder/cke_placeholder_forms';
+    $form['#attached']['drupalSettings']['cke_placeholder'] = [
+      'filter' => [],
+      'editors' => [],
+    ];
     $library_added = TRUE;
+
+    $plugin = \Drupal::service('plugin.manager.cke_placeholder_tags');
+    $definitions = $plugin->getDefinitions();
+    foreach ($definitions as $name => $definition) {
+      $form['#attached']['drupalSettings']['cke_placeholder']['filter'][$name] = _cke_placeholder_definition_to_settings($definition);
+    }
+
   }
 }
 
@@ -219,17 +230,29 @@ function cke_placeholder_field_widget_form_alter(&$element, FormStateInterface $
   if (!empty($cke_placeholder_widgets)) {
     if (!isset($library_add)) {
       $library_add = [];
-      $path = drupal_get_path('module', 'cke_placeholder');
-      $element['#attached']['library'][] = 'cke_placeholder/cke_placeholder_forms';
-      $element['#attached']['drupalSettings'] = [
-        'cke_placeholder' => [
-          'filter' => cke_placeholder_tags(),
-          'editors' => [],
-        ],
-      ];
     }
     $library_add = array_merge($cke_placeholder_widgets, $library_add);
   }
+}
+
+function _cke_placeholder_definition_to_settings($plugin_definition) {
+  $filter_settings = [];
+  foreach ($plugin_definition as $key => $setting) {
+
+    switch (gettype($setting)) {
+      case 'string':
+        $filter_settings[$key] = $setting;
+        break;
+
+      case 'object':
+        $filter_settings[$key] = $setting->render();
+        break;
+
+      case 'array':
+        $filter_settings[$key] = _cke_placeholder_definition_to_settings($setting);
+    }
+  }
+  return $filter_settings;
 }
 
 /**

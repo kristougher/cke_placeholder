@@ -7,7 +7,7 @@ use Drupal\cke_placeholder\CkePlaceholderLibraryBase;
 /**
  * Provides a CkepFileEntity plugin.
  *
- * CkePlaceholderLibrary(
+ * @CkePlaceholderLibrary(
  *   id = "upload_file",
  *   description = @Translation("Upload file plugin for CKE Placeholder library."),
  *   pane_title = @Translation("Upload file"),

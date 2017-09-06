@@ -7,18 +7,18 @@ use Drupal\cke_placeholder\CkePlaceholderLibraryBase;
 /**
  * Provides a CkepFileEntity plugin.
  *
- * CkePlaceholderLibrary(
- *   id = "crep_file_entity",
- *   description = @Translation("Crep File Entity plugin for CKE Placeholder library."),
+ * @CkePlaceholderLibrary(
+ *   id = "ckep_file_entity",
+ *   description = @Translation("Ckep File Entity plugin for CKE Placeholder library."),
  *   pane_title = @Translation("Media library"),
  *   list_wrapper_id = "ckep_file_entity-media-list",
  *   module = "ckep_file_entity"
  * )
  */
-class CrepFileEntity extends CkePlaceholderLibraryBase {
+class CkepFileEntity extends CkePlaceholderLibraryBase {
 
   /**
-   * @
+   * {@inheritdoc}
    */
   public function buildForm($form, $form_state) {
     $form['cke_placeholder_library'] = array(

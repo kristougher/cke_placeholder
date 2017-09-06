@@ -3,16 +3,17 @@
 namespace Drupal\ckep_file_entity\Plugin\CkePlaceholderTags;
 
 use Drupal\cke_placeholder\CkePlaceholderTagsBase;
+use Drupal\image\Entity\ImageStyle;
 
 /**
  * Provides a CkeFileEntity plugin.
  *
  * @CkePlaceholderTags(
- *   id = "cke_file_entity",
+ *   id = "ckep_file_entity",
  *   description = @Translation("Cke File Entity for CKE Placeholder Tags."),
  *   editables = {
  *     "caption" = {
- *       "label" = @Translation('Caption'),
+ *       "label" = @Translation("Caption"),
  *       "allowed_content" = "strong em i",
  *     }
  *   },
@@ -25,7 +26,7 @@ use Drupal\cke_placeholder\CkePlaceholderTagsBase;
  *     "right" = @Translation("Right"),
  *     "full" = @Translation("Full"),
  *   },
- *   module = "cke_placeholder"
+ *   module = "ckep_file_entity"
  * )
  */
 class CkeFileEntity extends CkePlaceholderTagsBase {
@@ -33,7 +34,7 @@ class CkeFileEntity extends CkePlaceholderTagsBase {
   /**
    * {@inheritdoc}
    */
-  public function process($media_values, $filter) {
+  public function process($media_values) {
     $file = file_load($media_values['id']);
     $output = '';
 
@@ -64,24 +65,24 @@ class CkeFileEntity extends CkePlaceholderTagsBase {
     // Loads the file.
     $output = '';
     $file = file_load(intval($args['id']));
-
-    $image_url = image_style_url('thumbnail', $file->uri);
+    $image_url = ImageStyle::load('thumbnail')->buildUrl($file->getFileUri());
 
     $wrap_style = 'full';
 
     if (!empty($args['alignment']) && ($args['alignment'] != 'full')) {
       $wrap_style = trim($args['alignment']);
     }
+    $render = [
+      '#theme' => 'ckep_file_entity_inline_image',
+      '#picture_tag' => [
+        '#theme' => 'image',
+        '#path' => $image_url,
+      ],
+      '#alignment_class' => 'body-text__picture--' . $wrap_style,
+      '#caption' => trim($args['caption']),
+    ];
+    $output = render($render);
 
-    if ($file->type == 'image') {
-      $output = theme('ckep_file_entity_inline_image', array(
-        'picture_tag' => theme('image', array('path' => $image_url)),
-        'alignment_class' => 'body-text__picture--',
-      ));
-    }
-    else {
-      $output = render(file_view($file, 'teaser'));
-    }
     return $output;
   }
 

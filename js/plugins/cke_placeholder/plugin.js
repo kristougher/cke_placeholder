@@ -13,6 +13,7 @@
     CKEDITOR.plugins.add('cke_placeholder', {
         icons: 'cke_placeholder',
         init: function (editor) {
+          CKEDITOR.config.extraAllowedContent = CKEDITOR.config.extraAllowedContent ? CKEDITOR.config.extraAllowedContent : '';
             CKEDITOR.config.extraAllowedContent += 'div(cke-placeholder-hidden,cke-placeholder)';
             CKEDITOR.dialog.add('cke_placeholder', this.path + 'dialogs/cke_placeholder.js');
             drupalSettings.cke_placeholder.editors.push(editor.name);
