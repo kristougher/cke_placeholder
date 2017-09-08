@@ -89,14 +89,14 @@ class CkePlaceholderLibraryForm extends FormBase {
         'data-target' => $pane_id,
       ),
     );
-
+    $form = [];
     $this->libraryForm['panes_wrapper'][$pane_name] = [
       '#type' => 'container',
       '#attributes' => [
         'class' => 'cke-placeholder-fieldset-wrapper',
         'id' => $pane_id,
       ],
-      'form_item' => $instance->buildForm(),
+      'form_item' => $instance->buildForm($form, ''),
     ];
   }
 

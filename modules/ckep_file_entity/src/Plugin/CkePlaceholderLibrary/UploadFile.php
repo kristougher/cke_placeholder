@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\cke_file_entity\Plugin\CkePlaceholderLibrary;
+namespace Drupal\ckep_file_entity\Plugin\CkePlaceholderLibrary;
 
 use Drupal\cke_placeholder\CkePlaceholderLibraryBase;
 
@@ -20,14 +20,14 @@ class UploadFile extends CkePlaceholderLibraryBase {
   /**
    * @
    */
-  public function buldForm() {
+  public function buildForm($form, $form_state) {
 
   }
 
   /**
    *
    */
-  public function getList() {
+  public function getList($form_state) {
 
   }
 }

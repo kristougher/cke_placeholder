@@ -27,7 +27,7 @@ class CkePlaceholderLibraryUpload extends CkePlaceholderLibraryBase implements C
   /**
    * {@inheritdoc}
    */
-  public function buildForm() {
+  public function buildForm($form, $form_state) {
     return [
       'images' => [
         '#type' => 'managed_file',
@@ -49,7 +49,7 @@ class CkePlaceholderLibraryUpload extends CkePlaceholderLibraryBase implements C
   /**
    * {@inheritdoc}
    */
-  public function getList() {
+  public function getList($form_state) {
     return [[
       '#markup' => 'jkdhfgkjsfgks',
     ]];

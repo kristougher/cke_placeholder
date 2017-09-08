@@ -72,36 +72,28 @@ function cke_placeholder_filter_process_callback(array $match, $set_filter = NUL
   if (empty($match['tag']) || !($tag = cke_placeholder_tags($match['tag']))) {
     return NULL;
   }
-  if (isset($tag['css']) && count($tag['css'])) {
-    foreach ($tag['css'] as $css) {
-      drupal_add_css($css);
-    }
+
+  if (!class_exists($tag['class'])) {
+    return NULL;
   }
 
-  if (isset($tag['js']) && count($tag['js'])) {
-    foreach ($tag['js'] as $js) {
-      drupal_add_js($js);
-    }
+  $lock_key = substr($tag['class'] . ':' . md5($match['args']), 0, 100);
+
+  // Make sure that we don't process elements recursively.
+  if (isset($currently_processing[$lock_key])) {
+    return $match[0];
   }
 
-  if (function_exists($tag['process'])) {
-    $function = $tag['process'];
+  $args = json_decode(str_replace("\\]", "]", $match['args']), 1);
+  $plugin = \Drupal::service('plugin.manager.cke_placeholder_tags')->createInstance($match['tag']);
+  // $plugin = new $tag['class']([], );
+  $currently_processing[$lock_key] = TRUE;
+  $render_array = $plugin->process($args);
+  $output = render($render_array);
 
-    $args = drupal_json_decode(str_replace("\\]", "]", $match['args']));
-    $lock_key = substr($function . ':' . md5($match['args']), 0, 100);
-    // Make sure that we don't process elements recursively.
-    if (isset($currently_processing[$lock_key])) {
-      return $match[0];
-    }
-    else {
-      $currently_processing[$lock_key] = TRUE;
-      $output = $function($args, $filter);
-      unset($currently_processing[$lock_key]);
-      return $output;
-    }
-  }
+  unset($currently_processing[$lock_key]);
 
-  return $match[0];
+  return $output;
 }
 
 /**
@@ -111,8 +103,8 @@ function cke_placeholder_tags($name = NULL) {
   $tags = &drupal_static(__FUNCTION__, array());
 
   if (!$tags) {
-    $tags = Drupal::moduleHandler()->invokeAll('cke_placeholder_tags');
-    Drupal::moduleHandler()->alter('cke_placeholder_tags', $tags);
+    $pluginManager = \Drupal::service('plugin.manager.cke_placeholder_tags');
+    $tags = $pluginManager->getDefinitions();
   }
   if (!empty($name)) {
     return isset($tags[$name]) ? $tags[$name] : NULL;

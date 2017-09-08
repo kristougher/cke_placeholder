@@ -1,6 +1,6 @@
 <?php
 
-namespace Drupal\cke_file_entity\Plugin\CkePlaceholderLibrary;
+namespace Drupal\ckep_file_entity\Plugin\CkePlaceholderLibrary;
 
 use Drupal\cke_placeholder\CkePlaceholderLibraryBase;
 
@@ -31,11 +31,11 @@ class CkepFileEntity extends CkePlaceholderLibraryBase {
     );
     // Start with the latest media items displayed. Create a dummy form_state.
     $offset = 0;
-
+    $settings = [];
     if (empty($form_state['values'])) {
       $params['values']['search'] = '';
       $params['values']['offset'] = 0;
-      $params['values']['count'] = variable_get('cke_placeholder_items_per_page', 8);
+      $params['values']['count'] = 8; // variable_get('cke_placeholder_items_per_page', 8);
     }
     else {
       $form_state['rebuild'] = TRUE;
@@ -171,7 +171,7 @@ class CkepFileEntity extends CkePlaceholderLibraryBase {
 
     $form['cke_placeholder_library']['results']['count'] = array(
       '#type' => 'hidden',
-      '#default_value' => variable_get('cke_placeholder_items_per_page', 8),
+      '#default_value' => 8, //variable_get('cke_placeholder_items_per_page', 8),
     );
 
     return $form;
@@ -186,7 +186,7 @@ class CkepFileEntity extends CkePlaceholderLibraryBase {
    * @return array
    *   Renderable array for the media library.
    */
-  public function getList(&$form_state, $search = NULL, $type = NULL, $count = 8, $offset = 0) {
+  public function getList($form_state) {
     $files = $this->build_query($offset, $count, $search, $type);
 
     if (count($files) > $count) {

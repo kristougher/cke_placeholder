@@ -37,7 +37,7 @@ interface CkePlaceholderLibraryInterface {
    * @return array
    *   A form array to display on the library pane.
    */
-  public function buildForm();
+  public function buildForm($form, $form_state);
 
   /**
    * Return the list of items to drag from CkePlaceholderLibrary.
@@ -45,6 +45,6 @@ interface CkePlaceholderLibraryInterface {
    * @return array
    *   An array of draggable list elements.
    */
-  public function getList();
+  public function getList($form_state);
 
 }

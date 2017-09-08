@@ -36,7 +36,7 @@ class DefaultController extends ControllerBase {
     $pluginClass = $pluginManager->createInstance($plugin);
     $output = $pluginClass->previewProcess($args);
 
-    return new JsonResponse(['markup' => $output]);
+    return new JsonResponse(['markup' => render($output)]);
   }
 
   public function source_pane() {

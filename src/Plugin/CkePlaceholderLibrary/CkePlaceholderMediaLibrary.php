@@ -27,7 +27,7 @@ class CkePlaceholderMediaLibrary extends CkePlaceholderLibraryBase implements Ck
   /**
    * {@inheritdoc}
    */
-  public function buildForm() {
+  public function buildForm($form, $form_state) {
     $form = [
       'search' => [
         '#type' => 'textfield',
@@ -55,7 +55,7 @@ class CkePlaceholderMediaLibrary extends CkePlaceholderLibraryBase implements Ck
   /**
    * {@inheritdoc}
    */
-  public function getList() {
+  public function getList($form_state) {
     return [[
       '#markup' => 'jkdhfgkjsfgks',
     ]];

@@ -33,10 +33,11 @@ abstract class CkePlaceholderLibraryBase extends PluginBase implements CkePlaceh
   /**
    * {@inheritdoc}
    */
-  abstract public function buildForm();
+  abstract public function buildForm($form, $form_state);
 
   /**
    * {@inheritdoc}
    */
-  abstract public function getList();
+  abstract public function getList($form_state);
+
 }

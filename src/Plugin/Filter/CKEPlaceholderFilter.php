@@ -22,6 +22,8 @@ class CKEPlaceholderFilter extends FilterBase {
 
   /**
    * {@inheritdoc}
+   *
+   * @TODO Add additional JS and CSS as libraries to the result object.
    */
   public function process($text, $langcode) {
     if (empty($text)) {
@@ -30,9 +32,10 @@ class CKEPlaceholderFilter extends FilterBase {
 
     $filter_regex = "/(<!--\s*)?\[(?<tag>[^]:]+):(?<args>(?:[^]\\\]|\\\.)*)\](\s*-->)?/";
     $output = preg_replace_callback($filter_regex, 'cke_placeholder_filter_process_callback', $text);
-    $output .= 'HEEESTEN ER BRUUUN';
 
-    return new FilterProcessResult($output);
+    $result = new FilterProcessResult($output);
+
+    return $result;
   }
 
   /**

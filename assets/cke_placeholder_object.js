@@ -101,7 +101,7 @@ var ckePlaceholder = {
       // Add lock to prevent from fetching two times simultaneously.
       ckePlaceholder.checkForContent.push(storageKey);
       console.log(drupalSettings.path);
-      var jqXHR = jQuery.getJSON('/' + drupalSettings.path.baseUrl + path, data);
+      var jqXHR = jQuery.getJSON(drupalSettings.path.baseUrl + path, data);
 
       jqXHR.promise().done(function (response) {
         element = CKEDITOR.instances[editorName].document.findOne('[data-cke_placeholder_id="' + storageKey + '"]');

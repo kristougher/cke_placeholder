@@ -10,7 +10,7 @@ require_once 'ckep_file_entity.library.inc';
 /**
  * Implements hook_help().
  */
-function ckep_file_entity_help($route_name, RouteMatchInterface $route_match) {
+function ckep_file_entity_help($route_name, $route_match) {
   if ($route_name == 'help.page.ckep_file_entity') {
     return t('<p>The CKEditor Placeholder File Entity module insert file entities in CKEditor fields.</p>');
   }
