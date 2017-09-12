@@ -4,17 +4,15 @@
  * Template for inline images.
  */
 #}
-<p>
-  <span class="text__figure {{ alignment_class }}">
-      <span class="figure">
-        <span class="picture">
-            {{ picture_tag }}
-        </span>
-        {% if caption is not empty %}
-            <span class="figure__caption">
-                {{ caption }}
-            </span>
-        {% endif%}
+<span class="text__figure {{ alignment_class }}">
+    <span class="figure">
+      <span class="picture">
+          {{ picture_tag }}
       </span>
-  </span>
-</p>
+      {% if caption is not empty %}
+          <span class="figure__caption">
+              {{ caption }}
+          </span>
+      {% endif%}
+    </span>
+</span>
