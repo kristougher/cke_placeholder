@@ -28,11 +28,18 @@ class CkePlaceholderLibraryUpload extends CkePlaceholderLibraryBase implements C
    * {@inheritdoc}
    */
   public function buildForm($form, $form_state) {
-    return [
+    $form['cke_placeholder_upload'] = [
+      '#type' => 'fieldset',
+      '#title' => t('File upload'),
+      '#tree' => TRUE,
+    ];
+
+    $form['cke_placeholder_upload']['file'] = [
       'images' => [
         '#type' => 'managed_file',
         '#title' => t('Upload file'),
         '#default_value' => NULL,
+        '#required' => FALSE,
         '#upload_location' => 'public://cke_placeholder_upload/',
         '#multiple' => TRUE,
         '#upload_validators' => [

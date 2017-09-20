@@ -12,5 +12,12 @@
     data-{{ key }}="{{ value }}"
   {% endfor %}
   >
-  {{ markup }}
+  {% if image_url is not empty %}
+    <span class="cke-placeholder-image-wrap">
+      <img src="{{ image_url }}" />
+    </span>
+  {% endif %}
+  <span class="cke-placeholder-description">
+    {{ description }}
+  </span>
 </div>

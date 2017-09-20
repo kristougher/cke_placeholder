@@ -35,7 +35,8 @@ function cke_placeholder_theme() {
     'cke_placeholder_library_item' => [
       'variables' => [
         'cke_placeholder_tag' => NULL,
-        'markup' => NULL,
+        'description' => NULL,
+        'image_url' => NULL,
         'data' => array(),
       ],
       'template' => 'cke_placeholder.library_item',
