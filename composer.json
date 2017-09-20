@@ -1,0 +1,10 @@
+{
+  "name": "kristougher/cke_placeholder",
+  "description": "CKEditor/form extension for user friendly insertion of content.",
+  "type": "drupal-module",
+  "license": "GPL-2.0+",
+  "minimum-stability": "dev",
+  "require": {
+    "alb/oembed": "~1.1"
+  }
+}

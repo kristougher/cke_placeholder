@@ -67,7 +67,6 @@
                 var settings = {
                     upcast: function (element) {
                         var className = name.replace(/_/g, '-');
-                        console.log([className, element, name, customPlugin], 1);
                         if (element.hasClass(name) || element.hasClass(className)) {
                             var plugin = element.attributes['data-cke_plugin'];
                             if (plugin != name) {

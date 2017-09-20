@@ -73,8 +73,7 @@ class CkePlaceholderMediaLibrary extends CkePlaceholderLibraryBase implements Ck
    * {@inheritdoc}
    */
   public function getList($form_state) {
-    return [[
-      '#markup' => 'jkdhfgkjsfgks',
-    ]];
+    return [['#markup' => 'jkdhfgkjsfgks']];
   }
+
 }
