@@ -34,17 +34,34 @@ class CkePlaceholderMediaLibrary extends CkePlaceholderLibraryBase implements Ck
         '#title' => t('Pony'),
       ],
       'list' => [
-        '#theme' => 'cke_placeholder_library_item',
+        '#theme' => 'cke_placeholder_library_item_list',
         '#cke_placeholder_tag' => 'ckep_file_entity',
         '#wrapper_id' => 'cke_placeholder_embed',
         '#items' => [
           [
-            'data' => [
+            '#theme' => 'cke_placeholder_library_item',
+            '#data' => [
               'id' => 1,
               'caption' => 'hej med dig',
               'type' => 'image',
             ],
-            'markup' => 'Træk denne',
+            '#cke_placeholder_tag' => 'ckep_file_entity',
+            '#markup' => 'Træk denne',
+          ],
+        ],
+      ],
+      'eembed' => [
+        '#theme' => 'cke_placeholder_library_item_list',
+        '#wrapper_id' => 'cke_placeholder_entity_embed',
+        '#cke_placeholder_tag' => 'ckep_file_entity_embed',
+        '#items' => [
+          [
+            '#theme' => 'cke_placeholder_entity_embed',
+            '#id' => '030825c7-5c92-4ce3-9ffe-b0afb428797d',
+            '#caption' => 'hej med dig',
+            '#entity_type' => 'media',
+            '#uuid' => '030825c7-5c92-4ce3-9ffe-b0afb428797d',
+            '#view_mode' => 'poster',
           ],
         ],
       ],

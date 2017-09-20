@@ -20,6 +20,36 @@ var ckePlaceholder = {
   },
 
   /**
+   * Event callback when dragging entity embed stuff.
+   *
+   * @todo move to separate function.
+   *
+   * @param ev
+   *   The event object.
+   */
+  dragStartEntityEmbed: function (ev, option) {
+    // Using currentTarget, since it will always get the droptarget element in
+    // all browsers, where target will only get the clicked element (img) in for
+    // example IE 9.
+    var item = jQuery(ev.currentTarget);
+    var placeholder_values = [];
+
+    for (var i in ev.currentTarget.attributes) {
+      var attr = ev.currentTarget.attributes[i];
+      if (attr.name && attr.name.indexOf('data-') === 0) {
+        placeholder_values.push(attr.name + '="' + attr.value + '"');
+      }
+    }
+    var data = '<drupal-entity ' + placeholder_values.join(' ') + '></drupal-entity';
+
+    // This works better on non-IE browsers with 'text/html'. But lowest
+    // common  denominator and all that.
+    var  dataContentType = 'text/html';
+    ev.dataTransfer.setData(dataContentType, data);
+    this.dragElementId = item.data('id');
+
+  },
+  /**
    * Event callback when dragging from media library.
    *
    * @todo move to separate function.
@@ -27,12 +57,13 @@ var ckePlaceholder = {
    * @param ev
    *   The event object.
    */
-  dragStart: function(ev, cke_placeholder_tag) {
+  dragStart: function (ev, cke_placeholder_tag) {
     // Using currentTarget, since it will always get the droptarget element in
     // all browsers, where target will only get the clicked element (img) in for
     // example IE 9.
     var item = jQuery(ev.currentTarget);
     var placeholder_values = {};
+
     for (var i in ev.currentTarget.attributes) {
       var attr = ev.currentTarget.attributes[i];
       if (attr.name && attr.name.indexOf('data-') === 0) {
@@ -85,7 +116,6 @@ var ckePlaceholder = {
    *   The markup is populated inside the function.
    */
   getContent: function (plugin, data, editorName, storageKey, reset) {
-    console.log([plugin, data, editorName, storageKey, reset]);
     var path = 'cke-placeholder/widget-preview/' + plugin;
     var self = this;
 
@@ -100,7 +130,6 @@ var ckePlaceholder = {
     if (this.checkForContent.indexOf(storageKey) < 0) {
       // Add lock to prevent from fetching two times simultaneously.
       ckePlaceholder.checkForContent.push(storageKey);
-      console.log(drupalSettings.path);
       var jqXHR = jQuery.getJSON(drupalSettings.path.baseUrl + path, data);
 
       jqXHR.promise().done(function (response) {
@@ -188,7 +217,6 @@ var ckePlaceholder = {
    *   HTML markup for a single widget.
    */
   getWidgetMarkup: function (plugin, data) {
-    console.log(plugin, data);
     data = JSON.parse(data);
     var storageKey = this.storageKey(plugin, data);
     var className = plugin.replace(/_/g, '-');
@@ -260,10 +288,8 @@ var ckePlaceholder = {
    * @returns {string}
    */
   storageKey: function (plugin, data) {
-
     var storageKey = plugin;
     var key_keys = jQuery.unique(drupalSettings.cke_placeholder.filter[plugin].key);
-    console.log(key_keys, data)
     for (var i in key_keys) {
       storageKey += '_' + encodeURI(data[key_keys[i]].replace(' ', ''));
     }
@@ -296,7 +322,6 @@ var ckePlaceholder = {
       var plugin = element.attributes.getNamedItem('data-cke_plugin').value;
       var dataRaw = element.childNodes.item(0).innerHTML;
       var data = self.getJsonFromPlaceholder(dataRaw);
-console.log(data);
       self.getContent(plugin, data, 'edit-body-und-0-value', storageKey, true);
     });
 

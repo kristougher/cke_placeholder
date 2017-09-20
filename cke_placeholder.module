@@ -35,11 +35,19 @@ function cke_placeholder_theme() {
     'cke_placeholder_library_item' => [
       'variables' => [
         'cke_placeholder_tag' => NULL,
+        'markup' => NULL,
+        'data' => array(),
+      ],
+      'template' => 'cke_placeholder.library_item',
+    ],
+    'cke_placeholder_library_item_list' => [
+      'variables' => [
+        'cke_placeholder_tag' => NULL,
         'wrapper_id' => NULL,
         'items' => array(),
         'no_wrapper' => NULL,
       ],
-      'template' => 'cke_placeholder.library_item',
+      'template' => 'cke_placeholder.library_item_list',
     ],
     'cke_placeholder_update_done' => [
       'variables' => [
@@ -48,6 +56,15 @@ function cke_placeholder_theme() {
         'caption' => NULL,
       ],
       'template' => 'cke_placeholder.update_done',
+    ],
+    'cke_placeholder_entity_embed' => [
+      'variables' => [
+        'caption' => NULL,
+        'entity_type' => NULL,
+        'view_mode' => NULL,
+        'uuid' => NULL,
+      ],
+      'template' => 'cke_placeholder_entity_embed',
     ],
   ];
 

@@ -1,0 +1,15 @@
+{#
+/**
+ * @file
+ * Library item template, used on node form.
+ */
+#}
+{% if no_wrapper is not empty %}
+<div id="{{ wrapper_id}}" class="cke-placeholder-list {{ cke_placeholder_tag }} {{ cke_placeholder_tag }}-wrap">
+{% endif %}
+    {% for item in items %}
+        {{ item }}
+    {% endfor %}
+{% if no_wrapper is not empty %}
+</div>
+{% endif %}
