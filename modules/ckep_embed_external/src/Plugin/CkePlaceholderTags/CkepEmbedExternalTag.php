@@ -49,10 +49,25 @@ class CkepEmbedExternalTag extends CkePlaceholderTagsBase {
     elseif (!empty($args['url'])) {
       $output = sprintf('<div class="ckep-embed-external"><iframe src="%s"></iframe></div>', $args['url']);
     }
-    return [
-      '#markup' => '<div class="embedded">' . $output . '</div>',
-      '#allowed_tags' => ['iframe', 'div', 'figure', 'picture'],
+    $render = [
+      '#theme' => 'ckep_embed_external',
+      '#content' => $output,
     ];
+    if (!empty($js)) {
+        $render['#attached']['html_head'][] = [
+          // The data.
+          [
+            '#type' => 'html_tag',
+            // The HTML tag to add, in this case a  tag.
+            '#tag' => 'script',
+            // Set attributes like src to load a file.
+            '#attributes' => array('src' => $js, 'async'),
+
+          ],
+          // Assuming that providers only.
+          $response->getProviderName(),
+        ];
+      }
   }
 
   protected function processOembed($url) {

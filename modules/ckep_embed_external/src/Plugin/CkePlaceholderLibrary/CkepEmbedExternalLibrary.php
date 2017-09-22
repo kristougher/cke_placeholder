@@ -3,7 +3,8 @@
 namespace Drupal\ckep_embed_external\Plugin\CkePlaceholderLibrary;
 
 use Drupal\cke_placeholder\CkePlaceholderLibraryBase;
-use Alb\OEmbed;
+use Alb\OEmbed\Simple as OEmbedSimple;
+use Alb\OEmbed\Provider as OEmbedProvider;
 
 /**
  * Provides a CkepFileEntity plugin.
@@ -58,13 +59,15 @@ class CkepEmbedExternalLibrary extends CkePlaceholderLibraryBase {
    */
   public static function getExternalContent($form, $form_state) {
     $url = $form_state->getValues()['ckep_embed_external']['url'];
-    self::preprocessUrl($url);
-    $response = OEmbed\Simple::request($url);
+    $provider = self::getProvider($url);
 
-    if ($response) {
+    if ($provider) {
+      $response = $provider->request($url);
       $title = $response->getTitle();
       $thumb = $response->getThumbnailUrl();
-      return [
+      $html = $response->getHtml();
+      $js = self::processHtml($html);
+      $render = [
         '#theme' => 'cke_placeholder_library_item',
         '#data' => [
           'type' => $response->getType(),
@@ -73,11 +76,15 @@ class CkepEmbedExternalLibrary extends CkePlaceholderLibraryBase {
           'provider_name' => $response->getProviderName(),
           'thumbnail_url' => $thumb,
           'url' => $url,
+          'html' => $html,
         ],
         '#cke_placeholder_tag' => 'ckep_embed_external',
         '#image_url' => $thumb,
         '#descriptoin' => $title . ' - ' . $response->getProviderName(),
       ];
+      if (!empty($js)) {
+        $render['#data']['js'] = $js;
+      }
     }
     return [
       '#theme' => 'cke_placeholder_library_item',
@@ -94,18 +101,35 @@ class CkepEmbedExternalLibrary extends CkePlaceholderLibraryBase {
   /**
    * Modify URL to oembed endpoint for specific providers.
    */
-  public static function preprocessUrl(&$url) {
+  public static function getProvider($url) {
     switch (parse_url($url)['host']) {
-      case 'twitter.com':
-        $url = 'https://publish.twitter.com/oembed?url=' . $url;
-        break;
 
       case 'facebook.com':
-        $url = 'https://www.facebook.com/plugins/post/oembed.json/?url=' . $url;
+        $endpoint = 'https://www.facebook.com/';
         break;
 
     }
+    if (!empty($endpoint)) {
+      $provider = new OEmbedProvider($endpoint, 'json');
+      return $provider;
+    }
+    elseif ($provider = OEmbedSimple::getProvider($url)) {
+      return $provider;
+    }
 
+    return NULL;
+  }
+
+  /**
+   * Remove script tags from HTML to include it appropriately.
+   */
+  public static function processHtml(&$html) {
+    $regex_file = '/<script(\w|\s)+src="(([a-zA-Z]|[0-9]|\.|-|_)+\.js)"([^>])+>/';
+    $regex_tag = '/<script([^>])*><\/script>/';
+    $matches = [];
+    preg_match($regex, $html, $matches);
+    $html = preg_replace($regex_tag, '', $html);
+    return $matches[2];
   }
 
   /**
@@ -120,4 +144,5 @@ class CkepEmbedExternalLibrary extends CkePlaceholderLibraryBase {
   public function getList($form_state) {
     return "";
   }
+
 }

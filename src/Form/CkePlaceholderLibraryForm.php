@@ -49,6 +49,22 @@ class CkePlaceholderLibraryForm extends FormBase {
       ),
     );
     $this->libraryForm = $base_form;
+    $this->getPaneViews();
+  }
+
+  /**
+   * Get the view panes with the CKE Placeholder Library Pane display.
+   */
+  protected function getPaneViews() {
+    $views = \Drupal\views\Views::getApplicableViews('ckep_library_pane');
+    $active_views = [];
+    foreach ($views as $view) {
+      $active_views[] = [
+        'view' => \Drupal\views\Views::getView($view[0]),
+        'display' => $view[1],
+      ];
+    }
+    // var_dump($views);
   }
 
   /**

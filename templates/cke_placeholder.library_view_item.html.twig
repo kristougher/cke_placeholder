@@ -1,0 +1,16 @@
+{#
+/**
+ * @file
+ * Library item template, used on node form.
+ */
+#}
+<div
+  draggable="true"
+  class="cke-placeholder-draggable"
+  ondragstart="ckePlaceholder.dragStart(event, '{{ cke_placeholder_tag }}')"
+  {% for key, value in data %}
+    data-{{ key }}="{{ value }}"
+  {% endfor %}
+  >
+    {{ preview }}
+</div>

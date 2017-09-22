@@ -1,0 +1,22 @@
+<?php
+
+/**
+ * @file
+ * Module file for CKE Placeholder Embed External.
+ */
+
+/**
+ * Implements hook_theme().
+ */
+function ckep_embed_external_theme() {
+  $theme = [];
+  $theme['ckep_embed_external_wrap'] = [
+    'variables' => [
+      'content' => NULL,
+      'type' => NULL,
+    ],
+    'template' => 'ckep_embed_external',
+  ];
+
+  return $theme;
+}

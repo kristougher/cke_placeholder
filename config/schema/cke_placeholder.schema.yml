@@ -8,3 +8,6 @@ cke_placeholder.settings:
       type: string
     cke_placeholder_items_per_page:
       type: integer
+views.display.ckep_library_pane:
+  type: views_display
+  label: 'CKE Placeholder display options'

@@ -7,7 +7,6 @@
 
 use Drupal\Core\Routing\RouteMatchInterface;
 use Drupal\Core\Form\FormStateInterface;
-use Drupal\cke_placeholder\CkePlaceholderLibraryInterface;
 use Drupal\cke_placeholder\Form\CkePlaceholderLibraryForm;
 
 /**
@@ -40,6 +39,14 @@ function cke_placeholder_theme() {
         'data' => array(),
       ],
       'template' => 'cke_placeholder.library_item',
+    ],
+    'cke_placeholder_library_view_item' => [
+      'variables' => [
+        'cke_placeholder_tag' => NULL,
+        'preview' => NULL,
+        'data' => array(),
+      ],
+      'template' => 'cke_placeholder.library_view_item',
     ],
     'cke_placeholder_library_item_list' => [
       'variables' => [
@@ -104,7 +111,6 @@ function cke_placeholder_filter_process_callback(array $match, $set_filter = NUL
 
   $args = json_decode(str_replace("\\]", "]", $match['args']), 1);
   $plugin = \Drupal::service('plugin.manager.cke_placeholder_tags')->createInstance($match['tag']);
-  // $plugin = new $tag['class']([], );
   $currently_processing[$lock_key] = TRUE;
   $render_array = $plugin->process($args);
   $output = render($render_array);
@@ -182,20 +188,6 @@ function cke_placeholder_form_alter(&$form, FormStateInterface $form_state, $for
   }
 }
 
-/*
-function _cke_placeholder_get_dynamic_library() {
-  return array(
-    'cke_placeholder_library' => array(
-      'image' => 'image',
-    ),
-    'cke_placeholder_document_library' => array(
-      'document' => 'document',
-    ),
-    'upload_file' => array(TRUE),
-  );
-}
-*/
-
 /**
  * Implements hook_field_widget_form_alter().
  */
@@ -245,6 +237,9 @@ function cke_placeholder_field_widget_form_alter(&$element, FormStateInterface $
   }
 }
 
+/**
+ * Make an array for drupalSettings from the plugin definition.
+ */
 function _cke_placeholder_definition_to_settings($plugin_definition) {
   $filter_settings = [];
   foreach ($plugin_definition as $key => $setting) {
