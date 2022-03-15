@@ -5,8 +5,8 @@ name: CI
 # Controls when the workflow will run
 on:
   # Triggers the workflow on push or pull request events but only for the master branch
-  delete:
-    branches: [ ${{ github.ref }} ]
+  pull_request: 
+    types: [closed]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
@@ -22,7 +22,7 @@ jobs:
 
       # Runs a single command using the runners shell
       - name: Run a one-line script
-        run: echo ${{ github.ref }}!
+        run: echo ${{ github.head_ref }}!
 
       # Runs a set of commands using the runners shell
       - name: Run a multi-line script
